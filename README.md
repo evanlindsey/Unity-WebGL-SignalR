@@ -2,7 +2,7 @@
 
 ## Repo Components
 
-- **Unity**: Unity3D project with SignalR library plugin (for editor / WebGL) and example scene
+- **Unity**: Unity3D project with Core SignalR library plugin (for editor / WebGL) and example scene
 - **Server**: ASP.NET Core project with a single SignalR hub for connection (CORS enabled)
 - **Client**: Node.js/Express project to serve built WebGL files from Unity
 
@@ -16,7 +16,15 @@ The files needed for importing as a 'Plugin' in a Unity3D project are located at
 
 [Unity/Assets/Plugins/SignalR](./Unity/Assets/Plugins/SignalR)
 
-Note: The C# client packages for SignalR are only needed for use in the editor.
+### Client C# Packages
+
+- _Microsoft.AspNetCore.SignalR.Client - 3.1.2_
+
+This and all dependencies were manually imported from NuGet using builds targeting .NET Standard 2.0. For specific versions, see:
+
+[Unity/Assets/Plugins/SignalR/Packages/Versions.txt](./Unity/Assets/Plugins/SignalR/Packages/Versions.txt)
+
+Note: These packages are only needed for use in the editor.
 
 ### Client JS File
 
