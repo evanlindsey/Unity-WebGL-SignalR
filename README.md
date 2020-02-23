@@ -1,16 +1,14 @@
 # Unity WebGL SignalR
 
-A basic library with example components for using SignalR in Unity WebGL.
+## Repo Components
+
+- **Unity**: Unity3D project with SignalR library plugin (for editor / WebGL) and example scene
+- **Server**: ASP.NET Core project with a single SignalR hub for connection (CORS enabled)
+- **Client**: Node.js/Express project to serve built WebGL files from Unity
 
 The hub is set to receive and broadcast a global message that invokes the listeners of all connected clients.
 
 This functionality could be greatly extended for actual use in games or applications.
-
-## Repo Components
-
-- **Unity**: Example Unity3D project making use of all components
-- **Server**: ASP.NET Core starter project with single hub for connection
-- **Client**: Node/Express project to serve built WebGL files
 
 ## Library
 
@@ -38,13 +36,13 @@ srLib.Init("<SignalRHubURL>", "<HubListenerName>");
 
 srLib.ConnectionStarted += (object sender, MessageEventArgs e) =>
 {
-    // DisplayMessage(e.Message);
+    Debug.Log(e.message);
     srLib.SendMessage("<HubMethodName>", "<MessageToSend>");
 };
 
 srLib.MessageReceived += (object sender, MessageEventArgs e) =>
 {
-    // DisplayMessage(e.Message);
+    Debug.Log(e.message);
 };
 ```
 
@@ -58,7 +56,6 @@ srLib.MessageReceived += (object sender, MessageEventArgs e) =>
 - **Hub Listener Name**: Name of listener to be invoked by the hub
 - **Hub Method Name**: Name of method in the Hub to receive message
 - **Message to Send**: Message to send to the hub
-- **Status Text**: Initial text to be displayed
 
 ### Successful Result
 
