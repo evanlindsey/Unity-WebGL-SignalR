@@ -12,7 +12,7 @@ This functionality could be greatly extended for actual use in games or applicat
 
 ## Plugin
 
-The files needed adding the Plugin to a Unity3D project are located at:
+The files needed for adding the Plugin to a Unity3D project are located at:
 
 [Unity/Assets/Plugins/SignalR](./Unity/Assets/Plugins/SignalR)
 
@@ -26,7 +26,7 @@ To import SignalR and all dependencies (targeting .NET Standard 2.0), you must h
 
 Once NuGet is installed, run the following command in PowerShell from the project base directory:
 
-```console
+```powershell
 ./signalr.ps1
 ```
 

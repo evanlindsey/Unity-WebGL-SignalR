@@ -8,9 +8,11 @@ $pluginDir = ".\Unity\Assets\Plugins\SignalR\Packages"
 nuget install Microsoft.AspNetCore.SignalR.Client -Version $srVersion -OutputDirectory $outDir
 nuget install System.Text.Json -Version $txtVersion -OutputDirectory $outDir
 
-foreach ($f in Get-ChildItem $outDir) {
-	$dll = Get-ChildItem "$($f.FullName)\lib\$($target)\*.dll"
-	foreach ($d in $dll) {
+$packages = Get-ChildItem -Path $outDir
+foreach ($p in $packages) {
+	$dll = Get-ChildItem -Path "$($p.FullName)\lib\$($target)\*.dll"
+	if (!($dll -eq $null)) {
+		$d = $dll[0]
 		if (!(Test-Path "$($pluginDir)\$($d.Name)")) {
 			Move-Item -Path $d.FullName -Destination $pluginDir
 		}
