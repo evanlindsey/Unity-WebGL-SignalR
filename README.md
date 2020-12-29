@@ -12,29 +12,23 @@ This functionality could be greatly extended for actual use in games or applicat
 
 ## Plugin
 
-The files needed for adding the Plugin to a Unity3D project are located at:
+The [Unity Package](https://docs.unity3d.com/Manual/AssetPackages.html) needed for adding the Plugin to a project can be found in the [Releases](https://github.com/evanlindsey/Unity-WebGL-SignalR/releases).
 
-[Unity/Assets/Plugins/SignalR](./Unity/Assets/Plugins/SignalR)
-
-### Client C# Packages
+## Client C# Packages
 
 - _Microsoft.AspNetCore.SignalR.Client - 3.1.10_
 
-To import SignalR and all dependencies (targeting .NET Standard 2.0), you must have the NuGet CLI installed locally:
+To work with SignalR in the Unity Editor, package dependencies (targeting .NET Standard 2.0) are required.
 
-[NuGet CLI reference](https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference)
+First, you must have the [NuGet CLI](https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference) installed locally.
 
-Once NuGet is installed, run the following command in PowerShell from the project base directory:
+Once NuGet is installed, execute the following command in [PowerShell](https://github.com/PowerShell/PowerShell) from the Plugin's [lib](./Unity/Assets/Plugins/SignalR/lib) directory to import the target .dll files.
 
 ```powershell
 ./signalr.ps1
 ```
 
-This will import and move the target .dll files to the plugin's packages directory.
-
-Note: These packages are only needed for use in the editor.
-
-### Client JS File
+## Client JS File
 
 Once the WebGL project is built, the following must be referenced in the 'head' section of index.html:
 

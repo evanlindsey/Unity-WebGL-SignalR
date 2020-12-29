@@ -2,8 +2,8 @@ $srVersion = "3.1.10"
 $txtVersion = "4.7.2"
 $target = "netstandard2.0"
 
-$outDir = ".\Packages"
-$pluginDir = ".\Unity\Assets\Plugins\SignalR\Packages"
+$outDir = ".\temp"
+$pluginDir = ".\"
 
 nuget install Microsoft.AspNetCore.SignalR.Client -Version $srVersion -OutputDirectory $outDir
 nuget install System.Text.Json -Version $txtVersion -OutputDirectory $outDir
