@@ -2,7 +2,7 @@
 
 ## Repo Components
 
-- **Unity**: Unity3D project with Core SignalR library plugin (for editor / WebGL) and example scene
+- **Unity**: Unity3D project with Core SignalR Plugin (for editor / WebGL) and example scene
 - **Server**: ASP.NET Core project with a single SignalR hub for connection (CORS enabled)
 - **Client**: Node.js/Express project to serve built WebGL files from Unity
 
@@ -10,19 +10,27 @@ The hub is set to receive and broadcast a global message that invokes the listen
 
 This functionality could be greatly extended for actual use in games or applications.
 
-## Library
+## Plugin
 
-The files needed for importing as a 'Plugin' in a Unity3D project are located at:
+The files needed adding the Plugin to a Unity3D project are located at:
 
 [Unity/Assets/Plugins/SignalR](./Unity/Assets/Plugins/SignalR)
 
 ### Client C# Packages
 
-- _Microsoft.AspNetCore.SignalR.Client - 3.1.2_
+- _Microsoft.AspNetCore.SignalR.Client - 3.1.10_
 
-This and all dependencies were manually imported from NuGet using builds targeting .NET Standard 2.0. For specific versions, see:
+To import SignalR and all dependencies (targeting .NET Standard 2.0), you must have the NuGet CLI installed locally:
 
-[Unity/Assets/Plugins/SignalR/Packages/Versions.txt](./Unity/Assets/Plugins/SignalR/Packages/Versions.txt)
+[NuGet CLI reference](https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference)
+
+Once NuGet is installed, run the following command in PowerShell from the project base directory:
+
+```console
+./signalr.ps1
+```
+
+This will import and move the target .dll files to the plugin's packages directory.
 
 Note: These packages are only needed for use in the editor.
 
@@ -30,7 +38,7 @@ Note: These packages are only needed for use in the editor.
 
 Once the WebGL project is built, the following must be referenced in the 'head' section of index.html:
 
-[https://cdn.jsdelivr.net/npm/@microsoft/signalr@3.1.2/dist/browser/signalr.min.js](https://cdn.jsdelivr.net/npm/@microsoft/signalr@3.1.2/dist/browser/signalr.min.js)
+[https://cdn.jsdelivr.net/npm/@microsoft/signalr@3.1.10/dist/browser/signalr.min.js](https://cdn.jsdelivr.net/npm/@microsoft/signalr@3.1.10/dist/browser/signalr.min.js)
 
 ![Source](./Screenshots/src.png)
 
@@ -42,9 +50,9 @@ Attach a script file to a GameObject in your scene and add the following code to
 srLib = new SignalRLib();
 srLib.Init("<SignalRHubURL>", "<HubListenerName>");
 
-srLib.ConnectionStarted += (object sender, MessageEventArgs e) =>
+srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
 {
-    Debug.Log(e.message);
+    Debug.Log(e.ConnectionId);
     srLib.SendMessage("<HubMethodName>", "<MessageToSend>");
 };
 
