@@ -58,3 +58,6 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# SignalR Packages
+/[Aa]ssets/Plugins/SignalR/Packages/*
+!/[Aa]ssets/Plugins/SignalR/Packages/.gitkeep

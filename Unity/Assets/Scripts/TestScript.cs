@@ -4,11 +4,14 @@ using UnityEngine.UI;
 public class TestScript : MonoBehaviour
 {
 
-    public string SignalRHubURL = "http://localhost:52611/MainHub";
+    public string SignalRHubURL = "http://localhost:5000/MainHub";
     public string HubListenerName = "ReceiveMessage";
     public string HubMethodName = "SendMessage";
+
     public string MessageToSend = "Hello World!";
+
     public string StatusText = "Awaiting Connection...";
+    public string ConnectedText = "Connection Started";
 
     SignalRLib srLib;
     Text uiText;
@@ -21,9 +24,10 @@ public class TestScript : MonoBehaviour
         srLib = new SignalRLib();
         srLib.Init(SignalRHubURL, HubListenerName);
 
-        srLib.ConnectionStarted += (object sender, MessageEventArgs e) =>
+        srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
         {
-            DisplayMessage(e.Message);
+            Debug.Log(e.ConnectionId);
+            DisplayMessage(ConnectedText);
             srLib.SendMessage(HubMethodName, MessageToSend);
         };
 
@@ -35,7 +39,6 @@ public class TestScript : MonoBehaviour
 
     void DisplayMessage(string message)
     {
-        Debug.Log(message);
         uiText.text += $"\n{message}";
     }
 

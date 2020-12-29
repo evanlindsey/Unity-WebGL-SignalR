@@ -29,7 +29,7 @@ var SignalRLib = {
 
         vars.connection.start()
             .then(function () {
-                vars.sendMessage('Connection Started', vars.cnxCallback);
+                vars.sendMessage(vars.connection.connectionId, vars.cnxCallback);
             }).catch(function (err) {
                 return console.error(err.toString());
             });
