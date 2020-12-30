@@ -18,21 +18,26 @@ public class SignalRLib
 
     private HubConnection connection;
 
-    public async void Init(string hubUrl, string hubListener)
+    public void Init(string hubUrl)
     {
         connection = new HubConnectionBuilder()
             .WithUrl(hubUrl)
             .Build();
+    }
 
-        connection.On<string>(hubListener, (message) =>
+    public void AddHandler(string handlerName)
+    {
+        connection.On<string>(handlerName, (payload) =>
         {
-            OnMessageReceived(message);
+            OnHandlerInvoked(handlerName, payload);
         });
+    }
 
+    public async void Connect()
+    {
         try
         {
             await connection.StartAsync();
-
             OnConnectionStarted(connection.ConnectionId);
         }
         catch (Exception ex)
@@ -41,58 +46,82 @@ public class SignalRLib
         }
     }
 
-    public async void SendMessage(string hubMethod, string hubMessage)
+    public async void SendToHub(string hubMethod, string payload)
     {
-        await connection.InvokeAsync(hubMethod, hubMessage);
+        await connection.InvokeAsync(hubMethod, payload);
     }
 
 #elif UNITY_WEBGL
 
-    [DllImport("__Internal")]
-    private static extern void Connect(string url, string listener, Action<string> cnx, Action<string> msg);
+    public delegate void OnConnectionCallback(string connectionId);
+    public delegate void OnHandlerCallback(string handlerName, string payload);
 
-    [DllImport("__Internal")]
-    private static extern void Invoke(string method, string message);
-
-    [MonoPInvokeCallback(typeof(Action<string>))]
+    [MonoPInvokeCallback(typeof(OnConnectionCallback))]
     public static void ConnectionCallback(string connectionId)
     {
         OnConnectionStarted(connectionId);
     }
 
-    [MonoPInvokeCallback(typeof(Action<string>))]
-    public static void MessageCallback(string message)
+    [MonoPInvokeCallback(typeof(OnHandlerCallback))]
+    public static void HandlerCallback(string handlerName, string payload)
     {
-        OnMessageReceived(message);
+        OnHandlerInvoked(handlerName, payload);
     }
 
-    public void Init(string hubUrl, string hubListener)
+    [DllImport("__Internal")]
+    private static extern void InitJs(string hubUrl);
+
+    [DllImport("__Internal")]
+    private static extern void AddHandlerJs(string handlerName, OnHandlerCallback handlerCallback);
+
+    [DllImport("__Internal")]
+    private static extern void ConnectJs(OnConnectionCallback connectionCallback);
+
+    [DllImport("__Internal")]
+    private static extern void SendToHubJs(string hubMethod, string payload);
+
+    public void Init(string hubUrl)
     {
-        Connect(hubUrl, hubListener, ConnectionCallback, MessageCallback);
+        InitJs(hubUrl);
     }
 
-    public void SendMessage(string hubMethod, string hubMessage)
+    public void AddHandler(string handlerName)
     {
-        Invoke(hubMethod, hubMessage);
+        AddHandlerJs(handlerName, HandlerCallback);
+    }
+
+    public void Connect()
+    {
+        ConnectJs(ConnectionCallback);
+    }
+
+    public void SendToHub(string hubMethod, string payload)
+    {
+        SendToHubJs(hubMethod, payload);
     }
 
 #endif
 
     public event EventHandler<ConnectionEventArgs> ConnectionStarted;
-    public event EventHandler<MessageEventArgs> MessageReceived;
+    public event EventHandler<HandlerEventArgs> HandlerInvoked;
 
     private static void OnConnectionStarted(string connectionId)
     {
-        var args = new ConnectionEventArgs();
-        args.ConnectionId = connectionId;
+        var args = new ConnectionEventArgs
+        {
+            ConnectionId = connectionId
+        };
         instance.ConnectionStarted?.Invoke(instance, args);
     }
 
-    private static void OnMessageReceived(string message)
+    private static void OnHandlerInvoked(string handlerName, string payload)
     {
-        var args = new MessageEventArgs();
-        args.Message = message;
-        instance.MessageReceived?.Invoke(instance, args);
+        var args = new HandlerEventArgs
+        {
+            HandlerName = handlerName,
+            Payload = payload
+        };
+        instance.HandlerInvoked?.Invoke(instance, args);
     }
 
 }
@@ -102,7 +131,8 @@ public class ConnectionEventArgs : EventArgs
     public string ConnectionId { get; set; }
 }
 
-public class MessageEventArgs : EventArgs
+public class HandlerEventArgs : EventArgs
 {
-    public string Message { get; set; }
+    public string HandlerName { get; set; }
+    public string Payload { get; set; }
 }
