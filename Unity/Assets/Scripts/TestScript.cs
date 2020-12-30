@@ -7,11 +7,8 @@ public class TestScript : MonoBehaviour
 
     public string SignalRHubURL = "http://localhost:5000/MainHub";
 
-    public const string HandlerNameA = "ReceivePayloadA";
-    public const string HandlerNameB = "ReceivePayloadB";
-
-    public const string HubMethodA = "SendPayloadA";
-    public const string HubMethodB = "SendPayloadB";
+    public string HubMethodA = "SendPayloadA";
+    public string HubMethodB = "SendPayloadB";
 
     public string MessageToSendA = "Hello World A";
     public string MessageToSendB = "Hello World B";
@@ -19,8 +16,11 @@ public class TestScript : MonoBehaviour
     public string StatusText = "Awaiting Connection...";
     public string ConnectedText = "Connection Started";
 
-    SignalRLib srLib;
-    Text uiText;
+    private const string HandlerNameA = "ReceivePayloadA";
+    private const string HandlerNameB = "ReceivePayloadB";
+
+    private SignalRLib srLib;
+    private Text uiText;
 
     void Start()
     {

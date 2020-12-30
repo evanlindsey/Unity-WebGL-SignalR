@@ -53,17 +53,17 @@ public class SignalRLib
 
 #elif UNITY_WEBGL
 
-    public delegate void OnConnectionCallback(string connectionId);
-    public delegate void OnHandlerCallback(string handlerName, string payload);
+    private delegate void OnConnectionCallback(string connectionId);
+    private delegate void OnHandlerCallback(string handlerName, string payload);
 
     [MonoPInvokeCallback(typeof(OnConnectionCallback))]
-    public static void ConnectionCallback(string connectionId)
+    private static void ConnectionCallback(string connectionId)
     {
         OnConnectionStarted(connectionId);
     }
 
     [MonoPInvokeCallback(typeof(OnHandlerCallback))]
-    public static void HandlerCallback(string handlerName, string payload)
+    private static void HandlerCallback(string handlerName, string payload)
     {
         OnHandlerInvoked(handlerName, payload);
     }
