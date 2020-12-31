@@ -1,17 +1,38 @@
-using UnityEngine;
-using System;
-using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.SignalR.Client;
 using AOT;
+using Microsoft.AspNetCore.SignalR.Client;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using UnityEngine;
 
 public class SignalRLib
 {
 
     private static SignalRLib instance;
 
-    public SignalRLib()
+    public SignalRLib(string hubUrl = "", List<string> handlerNames = null, bool connect = false)
     {
         instance = this;
+        if (!string.IsNullOrEmpty(hubUrl))
+        {
+            Init(hubUrl);
+        }
+        if (handlerNames != null)
+        {
+            AddHandlers(handlerNames);
+        }
+        if (connect)
+        {
+            Connect();
+        }
+    }
+
+    public void AddHandlers(List<string> handlerNames)
+    {
+        foreach (string handlerName in handlerNames)
+        {
+            AddHandler(handlerName);
+        }
     }
 
 #if UNITY_EDITOR

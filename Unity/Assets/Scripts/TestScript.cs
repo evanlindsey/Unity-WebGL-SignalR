@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Collections.Generic;
 
 public class TestScript : MonoBehaviour
 {
@@ -27,12 +28,8 @@ public class TestScript : MonoBehaviour
         uiText = GameObject.Find("Text").GetComponent<Text>();
         DisplayMessage(StatusText);
 
-        srLib = new SignalRLib();
-
-        srLib.Init(SignalRHubURL);
-        srLib.AddHandler(HandlerNameA);
-        srLib.AddHandler(HandlerNameB);
-        srLib.Connect();
+        var handlers = new List<string>() { HandlerNameA, HandlerNameB };
+        srLib = new SignalRLib(SignalRHubURL, handlers, true);
 
         srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
         {
