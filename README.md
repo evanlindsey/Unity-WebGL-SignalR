@@ -2,13 +2,9 @@
 
 ## Repo Components
 
-- **Unity**: Unity3D project with Core SignalR Plugin (for editor / WebGL) and example scene
-- **Server**: ASP.NET Core project with a single SignalR hub for connection (CORS enabled)
-- **Client**: Node.js/Express project to serve built WebGL files from Unity
-
-The hub is set to receive and broadcast a global message that invokes the listeners of all connected clients.
-
-This functionality could be greatly extended for actual use in games or applications.
+- **Unity**: Unity3D project with Core SignalR Plugin and example scene. For use in the editor and WebGL.
+- **Server**: ASP.NET Core project with SignalR hub/methods for connection (CORS enabled).
+- **Client**: Node.js/Express project to serve built Unity WebGL files.
 
 ## Plugin
 
@@ -30,46 +26,99 @@ Once NuGet is installed, execute the following command in [PowerShell](https://g
 
 ## Client JS File
 
-Once the WebGL project is built, the following must be referenced in the 'head' section of index.html:
+Once the Unity WebGL project is built, SignalR must be referenced in the 'head' section of index.html:
 
-[https://cdn.jsdelivr.net/npm/@microsoft/signalr@3.1.10/dist/browser/signalr.min.js](https://cdn.jsdelivr.net/npm/@microsoft/signalr@3.1.10/dist/browser/signalr.min.js)
-
-![Source](./Screenshots/src.png)
+```javascript
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@3.1.10/dist/browser/signalr.min.js"></script>
+```
 
 ## Usage
 
-Attach a script file to a GameObject in your scene and add the following code to your 'Start' method:
+### Public Methods
+
+- **Init**: Initialize a new instance of SignalRLib
+- **AddHandler**: Add the name of a handler to bind to the callback
+- **Connect**: Connect to the target SignalRHub
+- **SendToHub**: Send a payload to the target hub method
+
+### Public Events
+
+- **ConnectionStarted**: Called on successful connection to the hub
+- **HandlerInvoked**: Called each time one of the added handlers is invoked
+
+## Arguments
+
+Arguments sent to/from client handlers and server hub methods are single strings.
+
+- If multiple arguments or structures (such as an array) are needed, JSON is the best option.
+- The example handlers and hub methods are set to serialize/deserialize arguments as JSON.
+- It is still possible to use plain strings. Adjust your code accordingly.
+
+## Example
 
 ```c#
-srLib = new SignalRLib();
-srLib.Init("<SignalRHubURL>", "<HubListenerName>");
-
-srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
+void Start()
 {
-    Debug.Log(e.ConnectionId);
-    srLib.SendMessage("<HubMethodName>", "<MessageToSend>");
-};
+    // Initialize SignalR
+    var srLib = new SignalRLib();
+    srLib.Init("<SignalRHubURL>");
 
-srLib.MessageReceived += (object sender, MessageEventArgs e) =>
+    // Add all client handlers
+    srLib.AddHandler("<HandlerNameA>");
+    srLib.AddHandler("<HandlerNameB>");
+
+    // Connect to hub
+    srLib.Connect();
+
+    // Connection callback
+    srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
+    {
+        // Get current connection ID
+        Debug.Log(e.ConnectionId);
+
+        // Send payload A to hub
+        var json1 = new JsonPayload
+        {
+            message = "<MessageToSendA>"
+        };
+        srLib.SendToHub("<HubMethodA>", JsonUtility.ToJson(json1));
+
+        // Send payload B to hub
+        var json2 = new JsonPayload
+        {
+            message = "<MessageToSendB>"
+        };
+        srLib.SendToHub("<HubMethodB>", JsonUtility.ToJson(json2));
+    };
+
+    // Handler callback
+    srLib.HandlerInvoked += (object sender, HandlerEventArgs e) =>
+    {
+        // Deserialize payload from JSON
+        var json = JsonUtility.FromJson<JsonPayload>(e.Payload);
+
+        // Logic for multiple added handlers
+        switch (e.HandlerName)
+        {
+            case "<HandlerNameA>":
+                Debug.Log($"<HandlerNameA>: {json.message}");
+                break;
+            case "<HandlerNameB>":
+                Debug.Log($"<HandlerNameB>: {json.message}");
+                break;
+            default:
+                Debug.Log($"Handler: '{e.HandlerName}' not defined");
+                break;
+        }
+    };
+}
+
+[Serializable]
+public class JsonPayload
 {
-    Debug.Log(e.message);
-};
+    public string message;
+}
 ```
-
-### Properties
-
-![Properties](./Screenshots/props.png)
-
-![Hub](./Screenshots/hub.png)
-
-- **SignalR Hub URL**: Endpoint for the target SignalR hub
-- **Hub Listener Name**: Name of listener to be invoked by the hub
-- **Hub Method Name**: Name of method in the Hub to receive message
-- **Message to Send**: Message to send to the hub
-
-### Successful Result
-
-![Result](./Screenshots/res.png)
 
 ## References
 
