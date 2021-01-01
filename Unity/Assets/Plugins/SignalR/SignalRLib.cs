@@ -10,13 +10,14 @@ public class SignalRLib
 
     private static SignalRLib instance;
 
-    public SignalRLib(string hubUrl = "", List<string> handlerNames = null, bool connect = false)
+    public SignalRLib()
     {
         instance = this;
-        if (!string.IsNullOrEmpty(hubUrl))
-        {
-            Init(hubUrl);
-        }
+    }
+
+    public SignalRLib(string hubUrl, List<string> handlerNames = null, bool connect = false) : this()
+    {
+        Init(hubUrl);
         if (handlerNames != null)
         {
             AddHandlers(handlerNames);

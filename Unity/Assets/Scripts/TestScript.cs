@@ -6,19 +6,19 @@ using System.Collections.Generic;
 public class TestScript : MonoBehaviour
 {
 
-    public string SignalRHubURL = "http://localhost:5000/MainHub";
+    public string signalRHubURL = "http://localhost:5000/MainHub";
 
-    public string HubMethodA = "SendPayloadA";
-    public string HubMethodB = "SendPayloadB";
+    public string hubMethodA = "SendPayloadA";
+    public string hubMethodB = "SendPayloadB";
 
-    public string MessageToSendA = "Hello World A";
-    public string MessageToSendB = "Hello World B";
+    public string messageToSendA = "Hello World A";
+    public string messageToSendB = "Hello World B";
 
-    public string StatusText = "Awaiting Connection...";
-    public string ConnectedText = "Connection Started";
+    public string statusText = "Awaiting Connection...";
+    public string connectedText = "Connection Started";
 
-    private const string HandlerNameA = "ReceivePayloadA";
-    private const string HandlerNameB = "ReceivePayloadB";
+    private const string HANDLER_A = "ReceivePayloadA";
+    private const string HANDLER_B = "ReceivePayloadB";
 
     private SignalRLib srLib;
     private Text uiText;
@@ -26,27 +26,27 @@ public class TestScript : MonoBehaviour
     void Start()
     {
         uiText = GameObject.Find("Text").GetComponent<Text>();
-        DisplayMessage(StatusText);
+        DisplayMessage(statusText);
 
-        var handlers = new List<string>() { HandlerNameA, HandlerNameB };
-        srLib = new SignalRLib(SignalRHubURL, handlers, true);
+        var handlers = new List<string>() { HANDLER_A, HANDLER_B };
+        srLib = new SignalRLib(signalRHubURL, handlers, true);
 
         srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
         {
             Debug.Log(e.ConnectionId);
-            DisplayMessage(ConnectedText);
+            DisplayMessage(connectedText);
 
             var json1 = new JsonPayload
             {
-                message = MessageToSendA
+                message = messageToSendA
             };
-            srLib.SendToHub(HubMethodA, JsonUtility.ToJson(json1));
+            srLib.SendToHub(hubMethodA, JsonUtility.ToJson(json1));
 
             var json2 = new JsonPayload
             {
-                message = MessageToSendB
+                message = messageToSendB
             };
-            srLib.SendToHub(HubMethodB, JsonUtility.ToJson(json2));
+            srLib.SendToHub(hubMethodB, JsonUtility.ToJson(json2));
         };
 
         srLib.HandlerInvoked += (object sender, HandlerEventArgs e) =>
@@ -55,11 +55,11 @@ public class TestScript : MonoBehaviour
 
             switch (e.HandlerName)
             {
-                case HandlerNameA:
-                    DisplayMessage($"{HandlerNameA}: {json.message}");
+                case HANDLER_A:
+                    DisplayMessage($"{HANDLER_A}: {json.message}");
                     break;
-                case HandlerNameB:
-                    DisplayMessage($"{HandlerNameB}: {json.message}");
+                case HANDLER_B:
+                    DisplayMessage($"{HANDLER_B}: {json.message}");
                     break;
                 default:
                     Debug.Log($"Handler: '{e.HandlerName}' not defined");
