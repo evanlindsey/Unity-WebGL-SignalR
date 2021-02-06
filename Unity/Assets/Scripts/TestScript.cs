@@ -20,7 +20,6 @@ public class TestScript : MonoBehaviour
     private const string HANDLER_A = "ReceivePayloadA";
     private const string HANDLER_B = "ReceivePayloadB";
 
-    private SignalRLib srLib;
     private Text uiText;
 
     void Start()
@@ -29,7 +28,7 @@ public class TestScript : MonoBehaviour
         DisplayMessage(statusText);
 
         var handlers = new List<string>() { HANDLER_A, HANDLER_B };
-        srLib = new SignalRLib(signalRHubURL, handlers, true);
+        var srLib = new SignalRLib(signalRHubURL, handlers, true);
 
         srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
         {

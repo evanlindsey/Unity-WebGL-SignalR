@@ -46,7 +46,7 @@ Once the Unity WebGL project is built, SignalR must be referenced in the 'head' 
 - **ConnectionStarted**: Called on successful connection to the hub
 - **HandlerInvoked**: Called each time one of the added handlers is invoked
 
-## Arguments
+### Arguments
 
 Arguments sent to/from client handlers and server hub methods are single strings.
 
@@ -59,16 +59,11 @@ Arguments sent to/from client handlers and server hub methods are single strings
 ```c#
 void Start()
 {
+    // List of client handlers
+    var handlers = new List<string>() { "<HandlerNameA>", "<HandlerNameB>" };
+
     // Initialize SignalR
-    var srLib = new SignalRLib();
-    srLib.Init("<SignalRHubURL>");
-
-    // Add all client handlers
-    srLib.AddHandler("<HandlerNameA>");
-    srLib.AddHandler("<HandlerNameB>");
-
-    // Connect to hub
-    srLib.Connect();
+    var srLib = new SignalRLib("<SignalRHubURL>", handlers, connect: true);
 
     // Connection callback
     srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
