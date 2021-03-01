@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
-using System.Collections.Generic;
 
 public class TestScript : MonoBehaviour
 {
-
     public string signalRHubURL = "http://localhost:5000/MainHub";
 
     public string hubMethodA = "SendPayloadA";
@@ -22,19 +20,26 @@ public class TestScript : MonoBehaviour
 
     private Text uiText;
 
-    SignalRInterface srLib;
-    bool sent = false;
-
-    
     void Start()
     {
         uiText = GameObject.Find("Text").GetComponent<Text>();
         DisplayMessage(statusText);
 
-        var handlers = new List<string>() { HANDLER_A, HANDLER_B };
-        srLib = new SignalRLib(signalRHubURL, handlers, true);
+        var signalR = new SignalR();
+        signalR.Init(signalRHubURL);
 
-        srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
+        signalR.On(HANDLER_A, (string payload) =>
+        {
+            var json = JsonUtility.FromJson<JsonPayload>(payload);
+            DisplayMessage($"{HANDLER_A}: {json.message}");
+        });
+        signalR.On(HANDLER_B, (string payload) =>
+        {
+            var json = JsonUtility.FromJson<JsonPayload>(payload);
+            DisplayMessage($"{HANDLER_B}: {json.message}");
+        });
+
+        signalR.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
         {
             Debug.Log(e.ConnectionId);
             DisplayMessage(connectedText);
@@ -43,63 +48,16 @@ public class TestScript : MonoBehaviour
             {
                 message = messageToSendA
             };
-            srLib.SendToHub(hubMethodA, JsonUtility.ToJson(json1));
-
+            signalR.Invoke(hubMethodA, JsonUtility.ToJson(json1));
             var json2 = new JsonPayload
             {
                 message = messageToSendB
             };
-            srLib.SendToHub(hubMethodB, JsonUtility.ToJson(json2));
+            signalR.Invoke(hubMethodB, JsonUtility.ToJson(json2));
         };
 
-        srLib.HandlerInvoked += (object sender, HandlerEventArgs e) =>
-        {
-            var json = JsonUtility.FromJson<JsonPayload>(e.Payload);
-
-            switch (e.HandlerName)
-            {
-                case HANDLER_A:
-                    DisplayMessage($"{HANDLER_A}: {json.message}");
-                    break;
-                case HANDLER_B:
-                    DisplayMessage($"{HANDLER_B}: {json.message}");
-                    break;
-                default:
-                    Debug.Log($"Handler: '{e.HandlerName}' not defined");
-                    break;
-            }
-        };
+        signalR.Connect();
     }
-
-    #region See the magic here
-
-    void TestWebMat(){
-        DisplayMessage(statusText);
-
-        srLib = new SignalRInterface();
-
-        srLib.Init(signalRHubURL);
-
-        srLib.On<string>(HANDLER_A, arg => DisplayMessage(arg));
-
-        srLib.Connect();
-    }
-
-    private void FixedUpdate()
-    {
-        if (!sent && srLib!= null && srLib.IsConnected)
-        {
-            sent = true;
-
-            var json1 = new JsonPayload
-            {
-                message = messageToSendA
-            };
-            srLib.SendToHub(hubMethodA, JsonUtility.ToJson(json1));
-        }
-    }
-
-    #endregion
 
     void DisplayMessage(string message)
     {
@@ -111,5 +69,4 @@ public class TestScript : MonoBehaviour
     {
         public string message;
     }
-
 }
