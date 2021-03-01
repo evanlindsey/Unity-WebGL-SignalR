@@ -22,13 +22,17 @@ public class TestScript : MonoBehaviour
 
     private Text uiText;
 
+    SignalRInterface srLib;
+    bool sent = false;
+
+    
     void Start()
     {
         uiText = GameObject.Find("Text").GetComponent<Text>();
         DisplayMessage(statusText);
 
         var handlers = new List<string>() { HANDLER_A, HANDLER_B };
-        var srLib = new SignalRLib(signalRHubURL, handlers, true);
+        srLib = new SignalRLib(signalRHubURL, handlers, true);
 
         srLib.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
         {
@@ -66,6 +70,36 @@ public class TestScript : MonoBehaviour
             }
         };
     }
+
+    #region See the magic here
+
+    void TestWebMat(){
+        DisplayMessage(statusText);
+
+        srLib = new SignalRInterface();
+
+        srLib.Init(signalRHubURL);
+
+        srLib.On<string>(HANDLER_A, arg => DisplayMessage(arg));
+
+        srLib.Connect();
+    }
+
+    private void FixedUpdate()
+    {
+        if (!sent && srLib!= null && srLib.IsConnected)
+        {
+            sent = true;
+
+            var json1 = new JsonPayload
+            {
+                message = messageToSendA
+            };
+            srLib.SendToHub(hubMethodA, JsonUtility.ToJson(json1));
+        }
+    }
+
+    #endregion
 
     void DisplayMessage(string message)
     {

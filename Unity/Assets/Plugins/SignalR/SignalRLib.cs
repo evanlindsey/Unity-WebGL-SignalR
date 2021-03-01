@@ -70,7 +70,14 @@ public class SignalRLib
 
     public async void SendToHub(string hubMethod, string payload)
     {
-        await connection.InvokeAsync(hubMethod, payload);
+        try
+        {
+            await connection.InvokeAsync(hubMethod, payload);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
     }
 
 #elif UNITY_WEBGL
