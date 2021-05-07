@@ -3,6 +3,8 @@ var SignalRLib = {
     $vars: {
         connection: null,
         connectionCallback: null,
+        disconnectedCallback: null,
+        lastConnectionId:"",
         handlerCallback1: null,
         handlerCallback2: null,
         handlerCallback3: null,
@@ -33,12 +35,24 @@ var SignalRLib = {
             .build();
     },
 
-    ConnectJs: function (callback) {
-        vars.connectionCallback = callback;
+    StopJs: function () {
+        if (vars.connection){
+            vars.connection.stop();
+        }
+    },
+
+    ConnectJs: function (cCallback, dCallback) {
+        vars.connectionCallback = cCallback;
+        vars.disconnectedCallback = dCallback;
         vars.connection.start()
             .then(function () {
+                vars.lastConnectionId = vars.connection.connectionId;
+                vars.connection.onclose(function(){
+                    vars.invokeCallback([vars.lastConnectionId], vars.disconnectedCallback);
+                });
                 vars.invokeCallback([vars.connection.connectionId], vars.connectionCallback);
             }).catch(function (err) {
+                vars.invokeCallback([vars.lastConnectionId], vars.disconnectedCallback);
                 return console.error(err.toString());
             });
     },

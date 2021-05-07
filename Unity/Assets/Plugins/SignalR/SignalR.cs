@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class ConnectionEventArgs : EventArgs
@@ -26,9 +27,19 @@ public class SignalR
         };
         instance.ConnectionStarted?.Invoke(instance, args);
     }
-    public event EventHandler<ConnectionEventArgs> ConnectionStarted;
+    private static void OnConnectionClosed(string connectionId)
+    {
+        var args = new ConnectionEventArgs
+        {
+            ConnectionId = connectionId
+        };
+        instance.ConnectionClosed?.Invoke(instance, args);
+    }
 
-#if UNITY_EDITOR
+    public event EventHandler<ConnectionEventArgs> ConnectionStarted;
+    public event EventHandler<ConnectionEventArgs> ConnectionClosed;
+    
+#if UNITY_EDITOR || PLATFORM_SUPPORTS_MONO
 
     private HubConnection connection;
 
@@ -45,17 +56,45 @@ public class SignalR
             Debug.LogError(ex.Message);
         }
     }
+    
+    public void Stop()
+    {
+        SafeStop();
+        
+    }
+
+    private async void SafeStop()
+    {
+        try
+        {
+            await connection.StopAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
+    }
+
+    private static Task OnConnectionClosedEvent(Exception exception)
+    {
+        Debug.LogError(exception.Message);
+        OnConnectionClosed(instance.connection.ConnectionId);
+        return Task.CompletedTask;
+    }
 
     public async void Connect()
     {
         try
         {
             await connection.StartAsync();
+            connection.Closed -= OnConnectionClosedEvent;
+            connection.Closed += OnConnectionClosedEvent;
             OnConnectionStarted(connection.ConnectionId);
         }
         catch (Exception ex)
         {
             Debug.LogError(ex.Message);
+            OnConnectionClosed(connection.ConnectionId);
         }
     }
 
@@ -113,9 +152,19 @@ public class SignalR
     }
     #endregion
 
+    #region Stop JS
+    [DllImport("__Internal")]
+    private static extern void StopJs();
+
+    public void Stop()
+    {
+        StopJs();
+    }
+    #endregion
+
     #region Connect JS
     [DllImport("__Internal")]
-    private static extern void ConnectJs(Action<string> connectionCallback);
+    private static extern void ConnectJs(Action<string> connectionCallback, Action<string> disconnectedCallback);
 
     [MonoPInvokeCallback(typeof(Action<string>))]
     private static void ConnectionCallback(string connectionId)
@@ -123,9 +172,15 @@ public class SignalR
         OnConnectionStarted(connectionId);
     }
 
+    [MonoPInvokeCallback(typeof(Action<string>))]
+    private static void DisconnectedCallback(string connectionId)
+    {
+        OnConnectionClosed(connectionId);
+    }
+
     public void Connect()
     {
-        ConnectJs(ConnectionCallback);
+        ConnectJs(ConnectionCallback, DisconnectedCallback);
     }
     #endregion
 
@@ -283,6 +338,10 @@ public class SignalR
         OnJs(methodName, "8", HandlerCallback8);
     }
     #endregion
+
+#else
+
+#error Not support platform
 
 #endif
 }
