@@ -27,6 +27,8 @@ public class SignalR
         };
         instance.ConnectionStarted?.Invoke(instance, args);
     }
+    public event EventHandler<ConnectionEventArgs> ConnectionStarted;
+
     private static void OnConnectionClosed(string connectionId)
     {
         var args = new ConnectionEventArgs
@@ -35,13 +37,12 @@ public class SignalR
         };
         instance.ConnectionClosed?.Invoke(instance, args);
     }
-
-    public event EventHandler<ConnectionEventArgs> ConnectionStarted;
     public event EventHandler<ConnectionEventArgs> ConnectionClosed;
-    
+
 #if UNITY_EDITOR || PLATFORM_SUPPORTS_MONO
 
     private HubConnection connection;
+    private static string lastConnectionId;
 
     public void Init(string url)
     {
@@ -56,14 +57,32 @@ public class SignalR
             Debug.LogError(ex.Message);
         }
     }
-    
-    public void Stop()
+
+    public async void Connect()
     {
-        SafeStop();
-        
+        try
+        {
+            await connection.StartAsync();
+
+            lastConnectionId = connection.ConnectionId;
+
+            connection.Closed -= OnConnectionClosedEvent;
+            connection.Reconnecting -= OnConnectionReconnectingEvent;
+            connection.Reconnected -= OnConnectionReconnectedEvent;
+
+            connection.Closed += OnConnectionClosedEvent;
+            connection.Reconnecting += OnConnectionReconnectingEvent;
+            connection.Reconnected += OnConnectionReconnectedEvent;
+
+            OnConnectionStarted(lastConnectionId);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
     }
 
-    private async void SafeStop()
+    public async void Stop()
     {
         try
         {
@@ -77,25 +96,32 @@ public class SignalR
 
     private static Task OnConnectionClosedEvent(Exception exception)
     {
-        Debug.LogError(exception.Message);
-        OnConnectionClosed(instance.connection.ConnectionId);
+        if (exception != null)
+        {
+            Debug.LogError(exception.Message);
+        }
+
+        OnConnectionClosed(lastConnectionId);
+
         return Task.CompletedTask;
     }
 
-    public async void Connect()
+    private static Task OnConnectionReconnectingEvent(Exception exception)
     {
-        try
-        {
-            await connection.StartAsync();
-            connection.Closed -= OnConnectionClosedEvent;
-            connection.Closed += OnConnectionClosedEvent;
-            OnConnectionStarted(connection.ConnectionId);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError(ex.Message);
-            OnConnectionClosed(connection.ConnectionId);
-        }
+        Debug.Log($"Connection started reconnecting due to an error: {exception.Message}");
+
+        return Task.CompletedTask;
+    }
+
+    private static Task OnConnectionReconnectedEvent(string connectionId)
+    {
+        Debug.Log($"Connection successfully reconnected. The ConnectionId is now: {connectionId}");
+
+        lastConnectionId = connectionId;
+
+        OnConnectionStarted(lastConnectionId);
+
+        return Task.CompletedTask;
     }
 
     #region Invoke Editor
@@ -164,10 +190,10 @@ public class SignalR
 
     #region Connect JS
     [DllImport("__Internal")]
-    private static extern void ConnectJs(Action<string> connectionCallback, Action<string> disconnectedCallback);
+    private static extern void ConnectJs(Action<string> connectedCallback, Action<string> disconnectedCallback);
 
     [MonoPInvokeCallback(typeof(Action<string>))]
-    private static void ConnectionCallback(string connectionId)
+    private static void ConnectedCallback(string connectionId)
     {
         OnConnectionStarted(connectionId);
     }
@@ -180,7 +206,7 @@ public class SignalR
 
     public void Connect()
     {
-        ConnectJs(ConnectionCallback, DisconnectedCallback);
+        ConnectJs(ConnectedCallback, DisconnectedCallback);
     }
     #endregion
 
@@ -341,7 +367,7 @@ public class SignalR
 
 #else
 
-#error Not support platform
+#error PLATFORM NOT SUPPORTED
 
 #endif
 }

@@ -1,4 +1,4 @@
-$srVersion = "3.1.10"
+$srVersion = "3.1.19"
 $txtVersion = "4.7.2"
 $target = "netstandard2.0"
 
@@ -11,7 +11,7 @@ nuget install System.Text.Json -Version $txtVersion -OutputDirectory $outDir
 $packages = Get-ChildItem -Path $outDir
 foreach ($p in $packages) {
 	$dll = Get-ChildItem -Path "$($p.FullName)\lib\$($target)\*.dll"
-	if (!($dll -eq $null)) {
+	if (!($null -eq $dll)) {
 		$d = $dll[0]
 		if (!(Test-Path "$($pluginDir)\$($d.Name)")) {
 			Move-Item -Path $d.FullName -Destination $pluginDir

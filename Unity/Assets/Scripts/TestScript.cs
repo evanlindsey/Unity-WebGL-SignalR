@@ -14,6 +14,7 @@ public class TestScript : MonoBehaviour
 
     public string statusText = "Awaiting Connection...";
     public string connectedText = "Connection Started";
+    public string disconnectedText = "Connection Disconnected";
 
     private const string HANDLER_A = "ReceivePayloadA";
     private const string HANDLER_B = "ReceivePayloadB";
@@ -41,7 +42,7 @@ public class TestScript : MonoBehaviour
 
         signalR.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
         {
-            Debug.Log(e.ConnectionId);
+            Debug.Log($"Connected: {e.ConnectionId}");
             DisplayMessage(connectedText);
 
             var json1 = new JsonPayload
@@ -54,6 +55,11 @@ public class TestScript : MonoBehaviour
                 message = messageToSendB
             };
             signalR.Invoke(hubMethodB, JsonUtility.ToJson(json2));
+        };
+        signalR.ConnectionClosed += (object sender, ConnectionEventArgs e) =>
+        {
+            Debug.Log($"Disconnected: {e.ConnectionId}");
+            DisplayMessage(disconnectedText);
         };
 
         signalR.Connect();
