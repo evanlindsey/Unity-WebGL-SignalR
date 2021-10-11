@@ -12,7 +12,7 @@ The [Unity Package](https://docs.unity3d.com/Manual/AssetPackages.html) needed f
 
 ## Client C# Packages
 
-- _Microsoft.AspNetCore.SignalR.Client - 3.1.19_
+- [_Microsoft.AspNetCore.SignalR.Client - 3.1.19_](https://packages.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client/3.1.19)
 
 To work with SignalR in the Unity Editor, package dependencies (targeting .NET Standard 2.0) are required.
 
@@ -36,9 +36,11 @@ Once the Unity WebGL project is built, SignalR must be referenced in the 'head' 
 
 ### Public Methods
 
-- **Init**: Initialize and connect to a SignalR hub
+- **Init**: Initialize a new instance of HubConnectionBuilder with the URL
+- **Connect**: Start the connection to the hub and bind events
 - **On**: Bind to the callback of a named client handler
-- **Invoke**: Send arguments to a named SignalR hub method
+- **Invoke**: Send arguments to a named hub method
+- **Stop**: Stop the connection to the hub
 
 ### Public Events
 
@@ -99,6 +101,8 @@ void Start()
         // Log the disconnected ID
         Debug.Log($"Disconnected: {e.ConnectionId}");
     };
+    
+    signalR.Connect();
 }
 
 [Serializable]
