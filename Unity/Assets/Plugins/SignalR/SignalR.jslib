@@ -24,12 +24,12 @@ var SignalRLib = {
                 messages.push(buffer);
                 sig += 'i';
             }
-            Runtime.dynCall(sig, callback, messages);
+            dynCall(sig, callback, messages);
         }
     },
 
     InitJs: function (url) {
-        url = Pointer_stringify(url);
+        url = UTF8ToString(url);
         vars.connection = new signalR.HubConnectionBuilder()
             .withUrl(url)
             .build();
@@ -71,108 +71,108 @@ var SignalRLib = {
     },
 
     InvokeJs: function (methodName, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) {
-        methodName = Pointer_stringify(methodName);
+        methodName = UTF8ToString(methodName);
         if (arg1 && arg2 && arg3 && arg4 && arg5 && arg6 && arg7 && arg8 && arg9 && arg10) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
-            arg4 = Pointer_stringify(arg4);
-            arg5 = Pointer_stringify(arg5);
-            arg6 = Pointer_stringify(arg6);
-            arg7 = Pointer_stringify(arg7);
-            arg8 = Pointer_stringify(arg8);
-            arg9 = Pointer_stringify(arg9);
-            arg10 = Pointer_stringify(arg10);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
+            arg4 = UTF8ToString(arg4);
+            arg5 = UTF8ToString(arg5);
+            arg6 = UTF8ToString(arg6);
+            arg7 = UTF8ToString(arg7);
+            arg8 = UTF8ToString(arg8);
+            arg9 = UTF8ToString(arg9);
+            arg10 = UTF8ToString(arg10);
             vars.connection.invoke(methodName, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2 && arg3 && arg4 && arg5 && arg6 && arg7 && arg8 && arg9) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
-            arg4 = Pointer_stringify(arg4);
-            arg5 = Pointer_stringify(arg5);
-            arg6 = Pointer_stringify(arg6);
-            arg7 = Pointer_stringify(arg7);
-            arg8 = Pointer_stringify(arg8);
-            arg9 = Pointer_stringify(arg9);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
+            arg4 = UTF8ToString(arg4);
+            arg5 = UTF8ToString(arg5);
+            arg6 = UTF8ToString(arg6);
+            arg7 = UTF8ToString(arg7);
+            arg8 = UTF8ToString(arg8);
+            arg9 = UTF8ToString(arg9);
             vars.connection.invoke(methodName, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2 && arg3 && arg4 && arg5 && arg6 && arg7 && arg8) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
-            arg4 = Pointer_stringify(arg4);
-            arg5 = Pointer_stringify(arg5);
-            arg6 = Pointer_stringify(arg6);
-            arg7 = Pointer_stringify(arg7);
-            arg8 = Pointer_stringify(arg8);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
+            arg4 = UTF8ToString(arg4);
+            arg5 = UTF8ToString(arg5);
+            arg6 = UTF8ToString(arg6);
+            arg7 = UTF8ToString(arg7);
+            arg8 = UTF8ToString(arg8);
             vars.connection.invoke(methodName, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2 && arg3 && arg4 && arg5 && arg6 && arg7) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
-            arg4 = Pointer_stringify(arg4);
-            arg5 = Pointer_stringify(arg5);
-            arg6 = Pointer_stringify(arg6);
-            arg7 = Pointer_stringify(arg7);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
+            arg4 = UTF8ToString(arg4);
+            arg5 = UTF8ToString(arg5);
+            arg6 = UTF8ToString(arg6);
+            arg7 = UTF8ToString(arg7);
             vars.connection.invoke(methodName, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2 && arg3 && arg4 && arg5 && arg6) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
-            arg4 = Pointer_stringify(arg4);
-            arg5 = Pointer_stringify(arg5);
-            arg6 = Pointer_stringify(arg6);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
+            arg4 = UTF8ToString(arg4);
+            arg5 = UTF8ToString(arg5);
+            arg6 = UTF8ToString(arg6);
             vars.connection.invoke(methodName, arg1, arg2, arg3, arg4, arg5, arg6)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2 && arg3 && arg4 && arg5) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
-            arg4 = Pointer_stringify(arg4);
-            arg5 = Pointer_stringify(arg5);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
+            arg4 = UTF8ToString(arg4);
+            arg5 = UTF8ToString(arg5);
             vars.connection.invoke(methodName, arg1, arg2, arg3, arg4, arg5)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2 && arg3 && arg4) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
-            arg4 = Pointer_stringify(arg4);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
+            arg4 = UTF8ToString(arg4);
             vars.connection.invoke(methodName, arg1, arg2, arg3, arg4)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2 && arg3) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
-            arg3 = Pointer_stringify(arg3);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
+            arg3 = UTF8ToString(arg3);
             vars.connection.invoke(methodName, arg1, arg2, arg3)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1 && arg2) {
-            arg1 = Pointer_stringify(arg1);
-            arg2 = Pointer_stringify(arg2);
+            arg1 = UTF8ToString(arg1);
+            arg2 = UTF8ToString(arg2);
             vars.connection.invoke(methodName, arg1, arg2)
                 .catch(function (err) {
                     return console.error(err.toString());
                 });
         } else if (arg1) {
-            arg1 = Pointer_stringify(arg1);
+            arg1 = UTF8ToString(arg1);
             vars.connection.invoke(methodName, arg1)
                 .catch(function (err) {
                     return console.error(err.toString());
@@ -181,8 +181,8 @@ var SignalRLib = {
     },
 
     OnJs: function (methodName, argCount, callback) {
-        methodName = Pointer_stringify(methodName);
-        argCount = Number.parseInt(Pointer_stringify(argCount));
+        methodName = UTF8ToString(methodName);
+        argCount = Number.parseInt(UTF8ToString(argCount));
         if (argCount === 1) {
             vars.handlerCallback1 = callback;
             vars.connection.on(methodName, function (arg1) {
