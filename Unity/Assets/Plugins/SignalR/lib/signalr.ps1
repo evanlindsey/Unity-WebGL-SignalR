@@ -1,22 +1,28 @@
-$srVersion = "3.1.19"
-$txtVersion = "4.7.2"
-$target = "netstandard2.0"
+$signalRVersion = "6.0.10"
+$netTarget = "netstandard2.0"
 
-$outDir = ".\temp"
-$pluginDir = ".\"
+$tempDir = ".\temp"
+$dllDir = ".\dll"
 
-nuget install Microsoft.AspNetCore.SignalR.Client -Version $srVersion -OutputDirectory $outDir
-nuget install System.Text.Json -Version $txtVersion -OutputDirectory $outDir
+nuget install Microsoft.AspNetCore.SignalR.Client -Version $signalRVersion -OutputDirectory $tempDir
 
-$packages = Get-ChildItem -Path $outDir
+if (!(Test-Path $dllDir)) {
+	New-Item -ItemType "directory" -Path $dllDir
+}
+
+$packages = Get-ChildItem -Path $tempDir
 foreach ($p in $packages) {
-	$dll = Get-ChildItem -Path "$($p.FullName)\lib\$($target)\*.dll"
-	if (!($null -eq $dll)) {
-		$d = $dll[0]
-		if (!(Test-Path "$($pluginDir)\$($d.Name)")) {
-			Move-Item -Path $d.FullName -Destination $pluginDir
+	$path = "$($p.FullName)\lib\$($netTarget)"
+	if (Test-Path $path) {
+		$dll = Get-ChildItem -Path "$($path)\*.dll"
+		if (!($null -eq $dll)) {
+			$d = $dll[0]
+			$out = "$($dllDir)\$($d.Name)"
+			if (!(Test-Path $out)) {
+				Move-Item -Path $d.FullName -Destination $out
+			}
 		}
 	}
 }
 
-Remove-Item $outDir -Recurse
+Remove-Item $tempDir -Recurse

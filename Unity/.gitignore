@@ -71,5 +71,5 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # SignalR Packages
-/[Aa]ssets/Plugins/SignalR/lib/*.dll
-/[Aa]ssets/Plugins/SignalR/lib/*.dll.meta
+/[Aa]ssets/Plugins/SignalR/lib/dll
+/[Aa]ssets/Plugins/SignalR/lib/dll.meta

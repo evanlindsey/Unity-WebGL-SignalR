@@ -9,7 +9,7 @@ namespace SignalRServer.Hubs
     {
         public override Task OnConnectedAsync()
         {
-            Console.WriteLine(Context.ConnectionId);
+            Console.WriteLine($"Connected: {Context.ConnectionId}");
             return base.OnConnectedAsync();
         }
 
