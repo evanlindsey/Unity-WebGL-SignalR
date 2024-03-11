@@ -1,4 +1,4 @@
-$signalRVersion = "6.0.10"
+$signalRVersion = "8.0.2"
 $netTarget = "netstandard2.0"
 
 $tempDir = ".\temp"

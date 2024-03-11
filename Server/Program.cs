@@ -1,20 +1,21 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.StaticFiles;
+using SignalRServer.Hubs;
 
-namespace SignalRServer
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddSignalR();
+
+var app = builder.Build();
+
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings.Add(".unityweb", "application/octet-stream");
+app.UseFileServer(new FileServerOptions
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+    StaticFileOptions = { ContentTypeProvider = provider },
+    EnableDirectoryBrowsing = true,
+});
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
-}
+app.MapHub<MainHub>("/mainhub");
+
+app.Run();

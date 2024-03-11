@@ -1,43 +1,46 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Collections;
 
 public class TestScript : MonoBehaviour
 {
-    public string signalRHubURL = "http://localhost:5000/MainHub";
+    public string signalRHubURL = "http://localhost:5000/mainhub";
 
-    public string hubMethodA = "SendPayloadA";
-    public string hubMethodB = "SendPayloadB";
+    public string hubMethodAll = "SendPayloadAll";
+    public string hubMethodCaller = "SendPayloadCaller";
 
-    public string messageToSendA = "Hello World A";
-    public string messageToSendB = "Hello World B";
+    public string messageToSendAll = "Hello World All";
+    public string messageToSendCaller = "Hello World Caller";
 
     public string statusText = "Awaiting Connection...";
     public string connectedText = "Connection Started";
     public string disconnectedText = "Connection Disconnected";
 
-    private const string HANDLER_A = "ReceivePayloadA";
-    private const string HANDLER_B = "ReceivePayloadB";
+    private const string HANDLER_ALL = "ReceivePayloadAll";
+    private const string HANDLER_CALLER = "ReceivePayloadCaller";
 
     private Text uiText;
+    private string currentText = "";
 
     void Start()
     {
         uiText = GameObject.Find("Text").GetComponent<Text>();
+
         DisplayMessage(statusText);
 
         var signalR = new SignalR();
         signalR.Init(signalRHubURL);
 
-        signalR.On(HANDLER_A, (string payload) =>
+        signalR.On(HANDLER_ALL, (string payload) =>
         {
             var json = JsonUtility.FromJson<JsonPayload>(payload);
-            DisplayMessage($"{HANDLER_A}: {json.message}");
+            DisplayMessage($"{HANDLER_ALL}: {json.message}");
         });
-        signalR.On(HANDLER_B, (string payload) =>
+        signalR.On(HANDLER_CALLER, (string payload) =>
         {
             var json = JsonUtility.FromJson<JsonPayload>(payload);
-            DisplayMessage($"{HANDLER_B}: {json.message}");
+            DisplayMessage($"{HANDLER_CALLER}: {json.message}");
         });
 
         signalR.ConnectionStarted += (object sender, ConnectionEventArgs e) =>
@@ -47,14 +50,14 @@ public class TestScript : MonoBehaviour
 
             var json1 = new JsonPayload
             {
-                message = messageToSendA
+                message = messageToSendAll
             };
-            signalR.Invoke(hubMethodA, JsonUtility.ToJson(json1));
+            signalR.Invoke(hubMethodAll, JsonUtility.ToJson(json1));
             var json2 = new JsonPayload
             {
-                message = messageToSendB
+                message = messageToSendCaller
             };
-            signalR.Invoke(hubMethodB, JsonUtility.ToJson(json2));
+            signalR.Invoke(hubMethodCaller, JsonUtility.ToJson(json2));
         };
         signalR.ConnectionClosed += (object sender, ConnectionEventArgs e) =>
         {
@@ -65,9 +68,25 @@ public class TestScript : MonoBehaviour
         signalR.Connect();
     }
 
+    void Update()
+    {
+        if (uiText.text != currentText)
+        {
+            StartCoroutine(RebuildLayout());
+            currentText = uiText.text;
+        }
+    }
+
     void DisplayMessage(string message)
     {
-        uiText.text += $"\n{message}";
+        uiText.text += $"{message}\n";
+    }
+
+    IEnumerator RebuildLayout()
+    {
+        yield return null;
+
+        LayoutRebuilder.MarkLayoutForRebuild(uiText.rectTransform);
     }
 
     [Serializable]

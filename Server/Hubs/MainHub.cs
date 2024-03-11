@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
 using System.Text.Json;
-using System.Threading.Tasks;
-using System;
+using Microsoft.AspNetCore.SignalR;
 
 namespace SignalRServer.Hubs
 {
@@ -13,19 +11,18 @@ namespace SignalRServer.Hubs
             return base.OnConnectedAsync();
         }
 
-        public async Task SendPayloadA(string payload)
+        public async Task SendPayloadAll(string payload)
         {
             var data = JsonSerializer.Deserialize<dynamic>(payload);
             string json = JsonSerializer.Serialize(data);
-            await Clients.All.SendAsync("ReceivePayloadA", json);
+            await Clients.All.SendAsync("ReceivePayloadAll", json);
         }
 
-        public async Task SendPayloadB(string payload)
+        public async Task SendPayloadCaller(string payload)
         {
             var data = JsonSerializer.Deserialize<dynamic>(payload);
             string json = JsonSerializer.Serialize(data);
-            await Clients.All.SendAsync("ReceivePayloadB", json);
+            await Clients.Caller.SendAsync("ReceivePayloadCaller", json);
         }
-
     }
 }
