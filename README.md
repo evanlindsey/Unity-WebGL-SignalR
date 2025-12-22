@@ -1,11 +1,20 @@
 # Unity WebGL SignalR
 
-Currently tested against and targeting [Unity 2022.3.21f1 LTS](https://unity3d.com/unity/whats-new/2022.3.21).
+Currently tested against and targeting [Unity 6000.2.14f1](https://unity.com/releases/editor/whats-new/6000.2.14) (Unity 6).
 
 ## Repo Components
 
 - **Unity**: Unity3D project with Core SignalR Plugin and example scene. For use in the editor and WebGL.
-- **Server**: ASP.NET Core project with SignalR hub/methods for connection that serves built Unity WebGL files.
+- **Server**: ASP.NET Core 10 project with SignalR hub/methods for connection that serves built Unity WebGL files.
+
+## Quick Start
+
+```bash
+make help              # Show all available commands
+make install-signalr   # Install SignalR DLLs for Unity
+make server            # Run the server
+make health            # Check if server is running
+```
 
 ## Plugin
 
@@ -13,15 +22,15 @@ The [Asset Package](https://docs.unity3d.com/Manual/AssetPackages.html) needed f
 
 ## Client C# Packages
 
-- [_Microsoft.AspNetCore.SignalR.Client - 8.0.2_](https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client/8.0.2)
+- [_Microsoft.AspNetCore.SignalR.Client - 10.0.1_](https://www.nuget.org/packages/Microsoft.AspNetCore.SignalR.Client/10.0.1)
 
 To work with SignalR in the Unity Editor, package dependencies (targeting .NET Standard 2.0) are required.
 
-First, you must have the [NuGet CLI](https://docs.microsoft.com/en-us/nuget/reference/nuget-exe-cli-reference) installed locally (**v6.9.1** tested as functional).
-
-Once NuGet is installed, execute the following command in [PowerShell](https://github.com/PowerShell/PowerShell) from the Plugin's [lib](./Unity/Assets/Plugins/SignalR/lib) directory to import the target .dll files.
+See [SETUP.md](./Unity/Assets/Plugins/SignalR/SETUP.md) for detailed cross-platform installation instructions, or run the quick setup below:
 
 ```powershell
+# Requires PowerShell and NuGet CLI
+cd Unity/Assets/Plugins/SignalR/lib
 ./signalr.ps1
 ```
 
@@ -30,7 +39,7 @@ Once NuGet is installed, execute the following command in [PowerShell](https://g
 Once the Unity WebGL project is built, SignalR must be referenced in the 'head' section of [index.html](./Server/wwwroot/index.html):
 
 ```html
-<script src="https://www.unpkg.com/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+<script src="https://unpkg.com/@microsoft/signalr@10.0.0/dist/browser/signalr.min.js"></script>
 ```
 
 ## Usage
@@ -103,5 +112,5 @@ public class JsonPayload
 ## References
 
 - [Unity Manual - WebGL: Interacting with browser scripting](https://docs.unity3d.com/Manual/webgl-interactingwithbrowserscripting.html)
-- [Introduction to ASP.NET Core SignalR](https://docs.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-6.0)
+- [Introduction to ASP.NET Core SignalR](https://learn.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-10.0)
 - [jirihybek/unity-websocket-webgl](https://github.com/jirihybek/unity-websocket-webgl)

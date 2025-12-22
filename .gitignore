@@ -1,2 +1,4 @@
-**/.vs
-**/.vscode
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride

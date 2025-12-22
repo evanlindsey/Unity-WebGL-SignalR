@@ -1,28 +1,43 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 
-namespace SignalRServer.Hubs
+namespace SignalRServer.Hubs;
+
+public interface IMainHubClient
 {
-    public class MainHub : Hub
+    Task ReceivePayloadAll(string payload);
+    Task ReceivePayloadCaller(string payload);
+}
+
+public class MainHub(ILogger<MainHub> logger) : Hub<IMainHubClient>
+{
+    public override Task OnConnectedAsync()
     {
-        public override Task OnConnectedAsync()
-        {
-            Console.WriteLine($"Connected: {Context.ConnectionId}");
-            return base.OnConnectedAsync();
-        }
+        logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
+        return base.OnConnectedAsync();
+    }
 
-        public async Task SendPayloadAll(string payload)
+    public override Task OnDisconnectedAsync(Exception? exception)
+    {
+        if (exception is not null)
         {
-            var data = JsonSerializer.Deserialize<dynamic>(payload);
-            string json = JsonSerializer.Serialize(data);
-            await Clients.All.SendAsync("ReceivePayloadAll", json);
+            logger.LogWarning(exception, "Client disconnected with error: {ConnectionId}", Context.ConnectionId);
         }
+        else
+        {
+            logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
+        }
+        return base.OnDisconnectedAsync(exception);
+    }
 
-        public async Task SendPayloadCaller(string payload)
-        {
-            var data = JsonSerializer.Deserialize<dynamic>(payload);
-            string json = JsonSerializer.Serialize(data);
-            await Clients.Caller.SendAsync("ReceivePayloadCaller", json);
-        }
+    public async Task SendPayloadAll(string payload)
+    {
+        logger.LogDebug("Broadcasting payload from {ConnectionId}", Context.ConnectionId);
+        await Clients.All.ReceivePayloadAll(payload);
+    }
+
+    public async Task SendPayloadCaller(string payload)
+    {
+        logger.LogDebug("Sending payload to caller {ConnectionId}", Context.ConnectionId);
+        await Clients.Caller.ReceivePayloadCaller(payload);
     }
 }
