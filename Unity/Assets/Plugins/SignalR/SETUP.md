@@ -159,4 +159,3 @@ To update to a newer version of SignalR:
 
 - `signalr.ps1` - Setup script that downloads and extracts SignalR DLLs
 - `dll/` - Output directory containing the SignalR assemblies (gitignored)
-- `version.txt` - Current SignalR version tracking

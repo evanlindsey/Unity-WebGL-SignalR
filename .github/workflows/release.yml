@@ -1,0 +1,165 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Unity/**'
+      - 'Server/**'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/test.yml'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Run full pipeline without creating a release'
+        type: boolean
+        default: true
+
+jobs:
+  version:
+    name: Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+      skip: ${{ steps.version.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from PR label or increment patch
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find the merged PR for this push
+          PR=$(gh pr list --state merged --base main --json number,labels,mergeCommit \
+            --jq ".[] | select(.mergeCommit.oid == \"$GITHUB_SHA\") | {number, labels}")
+
+          VERSION=""
+
+          # Check for version:X.Y.Z label
+          if [ -n "$PR" ]; then
+            VERSION=$(echo "$PR" | jq -r '.labels[]?.name' | grep -oP '^version:\K.*' || true)
+          fi
+
+          # No label — auto-increment patch from latest tag
+          if [ -z "$VERSION" ]; then
+            LATEST=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+            if [ -z "$LATEST" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::No version label and no existing tags — skipping release"
+              exit 0
+            fi
+            LATEST="${LATEST#v}"
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST"
+            VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+
+          # Check if tag already exists
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Tag v$VERSION already exists — skipping release"
+            exit 0
+          fi
+
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+  test:
+    needs: version
+    if: needs.version.outputs.skip != 'true'
+    uses: ./.github/workflows/test.yml
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+  release:
+    name: Build & Release
+    needs: [version, test]
+    if: needs.version.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Unity/Library
+          key: unity-library-${{ hashFiles('Unity/Assets/**', 'Unity/Packages/**', 'Unity/ProjectSettings/**') }}
+          restore-keys: |
+            unity-library-
+
+      - name: Export .unitypackage
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        with:
+          projectPath: Unity
+          buildMethod: ExportPackage.Export
+          unityVersion: auto
+          allowDirtyBuild: true
+
+      - name: Find .unitypackage
+        id: package
+        run: |
+          PACKAGE=$(ls unity-webgl-signalr-*.unitypackage 2>/dev/null || ls Unity/unity-webgl-signalr-*.unitypackage 2>/dev/null)
+          if [ -z "$PACKAGE" ]; then
+            echo "::error::No .unitypackage found"
+            exit 1
+          fi
+          echo "path=$PACKAGE" >> "$GITHUB_OUTPUT"
+          echo "Found package: $PACKAGE"
+
+      - name: Extract changelog
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          BODY=""
+          # Try versioned section first
+          BODY=$(awk "/^## \[$VERSION\]/{found=1; next} /^## \[/{if(found) exit} found" CHANGELOG.md)
+          # Fall back to [Unreleased]
+          if [ -z "$BODY" ]; then
+            BODY=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found' CHANGELOG.md)
+          fi
+          echo "$BODY" > release-notes.md
+
+      - name: Create tag and GitHub Release
+        if: inputs.dry-run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ needs.version.outputs.version }}"
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" \
+            --title "$TAG Unity-WebGL-SignalR" \
+            --notes-file release-notes.md \
+            "${{ steps.package.outputs.path }}"
+
+      - name: Dry-run summary
+        if: inputs.dry-run == true
+        run: |
+          echo "::notice::Dry run — would release v${{ needs.version.outputs.version }}"
+          echo "Package: ${{ steps.package.outputs.path }}"
+          echo "Release notes:"
+          cat release-notes.md
+
+      - name: Upload package (dry-run)
+        if: inputs.dry-run == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: unitypackage-dry-run
+          path: ${{ steps.package.outputs.path }}

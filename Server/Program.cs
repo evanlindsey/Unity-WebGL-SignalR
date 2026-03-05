@@ -7,12 +7,27 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
 builder.Services.AddHealthChecks();
 
+// Allow cross-origin requests from Unity Editor during development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddDefaultPolicy(policy =>
+            policy.AllowAnyHeader().AllowAnyMethod().SetIsOriginAllowed(_ => true).AllowCredentials());
+    });
+}
+
 var app = builder.Build();
 
 // Enforce HTTPS in production
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors();
 }
 
 // Configure static file serving for Unity WebGL builds

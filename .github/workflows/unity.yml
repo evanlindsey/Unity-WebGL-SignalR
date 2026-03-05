@@ -1,0 +1,164 @@
+name: Unity CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Unity/**'
+      - 'Server/**'
+      - 'e2e/**'
+      - '.github/workflows/unity.yml'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Unity/**'
+      - 'Server/**'
+      - 'e2e/**'
+      - '.github/workflows/unity.yml'
+      - '.github/workflows/test.yml'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Run full pipeline without committing'
+        type: boolean
+        default: true
+      skip-smoke:
+        description: 'Skip WebGL smoke test'
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+  build:
+    name: WebGL Build
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Unity/Library
+          key: unity-library-${{ hashFiles('Unity/Assets/**', 'Unity/Packages/**', 'Unity/ProjectSettings/**') }}
+          restore-keys: |
+            unity-library-
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Unity
+          targetPlatform: WebGL
+          unityVersion: auto
+
+      - name: Upload WebGL build
+        uses: actions/upload-artifact@v4
+        with:
+          name: webgl-build
+          path: build/WebGL
+
+      # On merge to main: update Server/wwwroot with the fresh WebGL build
+      - name: Update wwwroot
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          rm -rf Server/wwwroot/Build Server/wwwroot/TemplateData Server/wwwroot/index.html
+          cp -r build/WebGL/WebGL/* Server/wwwroot/
+
+      - name: Commit wwwroot updates
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.dry-run != true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Server/wwwroot/
+          if git diff --cached --quiet; then
+            echo "No wwwroot changes to commit"
+          else
+            git commit -m "ci: update wwwroot with WebGL build [skip ci]"
+            git push
+          fi
+
+      - name: Dry-run summary
+        if: inputs.dry-run == true
+        run: |
+          echo "::notice::Dry run — skipped wwwroot commit and push"
+          echo "Build artifacts are available for inspection"
+
+  smoke:
+    name: WebGL Smoke Test
+    needs: build
+    if: inputs.skip-smoke != true
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download WebGL build
+        uses: actions/download-artifact@v4
+        with:
+          name: webgl-build
+          path: build/WebGL
+
+      - name: Copy build to wwwroot
+        run: |
+          rm -rf Server/wwwroot/Build Server/wwwroot/TemplateData Server/wwwroot/index.html
+          cp -r build/WebGL/WebGL/* Server/wwwroot/
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Start server
+        run: |
+          cd Server
+          dotnet run --urls "http://localhost:5000" &
+          # Wait for server to be ready
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5000/health > /dev/null 2>&1; then
+              echo "Server is ready"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Install Playwright
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+
+      - name: Run smoke test
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: Upload smoke test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-results
+          path: e2e/test-results

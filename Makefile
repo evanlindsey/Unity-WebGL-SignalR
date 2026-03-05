@@ -1,4 +1,4 @@
-.PHONY: help server server-release build build-release format install-signalr copy-build health clean
+.PHONY: help server server-release build build-release format install-signalr health clean
 
 # Default target
 help: ## Show this help
