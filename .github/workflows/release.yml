@@ -87,10 +87,15 @@ jobs:
     steps:
       - name: Free disk space
         uses: jlumbroso/free-disk-space@main
+        with:
+          dotnet: false
 
       - uses: actions/checkout@v6
         with:
           lfs: true
+
+      - name: Install SignalR DLLs
+        run: make install-signalr
 
       - name: Cache Unity Library
         uses: actions/cache@v5

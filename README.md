@@ -29,7 +29,7 @@ To work with SignalR in the Unity Editor, package dependencies (targeting .NET S
 See [SETUP.md](./Unity/Assets/Plugins/SignalR/SETUP.md) for detailed cross-platform installation instructions, or run the quick setup below:
 
 ```powershell
-# Requires PowerShell and NuGet CLI
+# Requires PowerShell and .NET SDK
 cd Unity/Assets/Plugins/SignalR/lib
 ./signalr.ps1
 ```
@@ -81,20 +81,20 @@ As per the official SignalR API, up to 8 args can be received ([On](https://gith
 
 Use `SignalROptions` to configure authentication, transport, and connection behavior:
 
-| Option | Type | Description | Platforms |
-|--------|------|-------------|-----------|
-| `AccessToken` | `string` | Static Bearer auth token | Both |
-| `AccessTokenFactory` | `Func<Task<string>>` | Async token provider | Editor only |
-| `Headers` | `Dictionary<string,string>` | Custom HTTP headers | Both |
-| `WithCredentials` | `bool?` | Send cookies cross-origin (default: true) | Both |
-| `Transport` | `TransportType?` | Force WebSockets/SSE/LongPolling | Both |
-| `SkipNegotiation` | `bool?` | Skip negotiation (WebSockets only) | Both |
-| `HttpTimeout` | `int?` | HTTP request timeout in ms (default: 100000) | WebGL |
-| `ServerTimeout` | `int?` | Server activity timeout in ms (default: 30000) | Both |
-| `KeepAliveInterval` | `int?` | Ping interval in ms (default: 15000) | Both |
-| `LogMessageContent` | `bool?` | Log message bodies (default: false) | WebGL |
-| `LogLevel` | `SignalRLogLevel?` | Client log level | WebGL |
-| `RetryDelays` | `int[]` | Custom reconnect retry delays in ms | Both |
+| Option               | Type                        | Description                                    | Platforms   |
+| -------------------- | --------------------------- | ---------------------------------------------- | ----------- |
+| `AccessToken`        | `string`                    | Static Bearer auth token                       | Both        |
+| `AccessTokenFactory` | `Func<Task<string>>`        | Async token provider                           | Editor only |
+| `Headers`            | `Dictionary<string,string>` | Custom HTTP headers                            | Both        |
+| `WithCredentials`    | `bool?`                     | Send cookies cross-origin (default: true)      | Both        |
+| `Transport`          | `TransportType?`            | Force WebSockets/SSE/LongPolling               | Both        |
+| `SkipNegotiation`    | `bool?`                     | Skip negotiation (WebSockets only)             | Both        |
+| `HttpTimeout`        | `int?`                      | HTTP request timeout in ms (default: 100000)   | WebGL       |
+| `ServerTimeout`      | `int?`                      | Server activity timeout in ms (default: 30000) | Both        |
+| `KeepAliveInterval`  | `int?`                      | Ping interval in ms (default: 15000)           | Both        |
+| `LogMessageContent`  | `bool?`                     | Log message bodies (default: false)            | WebGL       |
+| `LogLevel`           | `SignalRLogLevel?`          | Client log level                               | WebGL       |
+| `RetryDelays`        | `int[]`                     | Custom reconnect retry delays in ms            | Both        |
 
 ## Example
 
