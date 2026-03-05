@@ -23,7 +23,7 @@ jobs:
       version: ${{ steps.version.outputs.value }}
       skip: ${{ steps.version.outputs.skip }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -88,12 +88,12 @@ jobs:
       - name: Free disk space
         uses: jlumbroso/free-disk-space@main
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: true
 
       - name: Cache Unity Library
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: Unity/Library
           key: unity-library-${{ hashFiles('Unity/Assets/**', 'Unity/Packages/**', 'Unity/ProjectSettings/**') }}
@@ -159,7 +159,7 @@ jobs:
 
       - name: Upload package (dry-run)
         if: inputs.dry-run == true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: unitypackage-dry-run
           path: ${{ steps.package.outputs.path }}
