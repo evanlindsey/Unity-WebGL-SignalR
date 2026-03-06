@@ -7,5 +7,8 @@ module.exports = defineConfig({
   use: {
     headless: true,
     viewport: { width: 1024, height: 768 },
+    launchOptions: {
+      args: ['--use-gl=angle'],
+    },
   },
 });
