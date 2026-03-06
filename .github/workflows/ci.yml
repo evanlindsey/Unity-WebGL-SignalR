@@ -143,12 +143,13 @@ jobs:
           npx playwright install chromium --with-deps
 
       - name: Run smoke test
+        id: smoke
         working-directory: e2e
         run: npx playwright test
 
       - name: Upload smoke test results
         uses: actions/upload-artifact@v6
-        if: always()
+        if: steps.smoke.outcome == 'failure'
         with:
           name: smoke-test-results
-          path: e2e/test-results
+          path: e2e/playwright-report
