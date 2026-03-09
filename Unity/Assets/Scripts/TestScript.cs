@@ -35,11 +35,13 @@ public class TestScript : MonoBehaviour
         signalR.On(HANDLER_ALL, (string payload) =>
         {
             var json = JsonUtility.FromJson<JsonPayload>(payload);
+            Debug.Log($"{HANDLER_ALL}: {json.message}");
             DisplayMessage($"{HANDLER_ALL}: {json.message}");
         });
         signalR.On(HANDLER_CALLER, (string payload) =>
         {
             var json = JsonUtility.FromJson<JsonPayload>(payload);
+            Debug.Log($"{HANDLER_CALLER}: {json.message}");
             DisplayMessage($"{HANDLER_CALLER}: {json.message}");
         });
 

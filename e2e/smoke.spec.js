@@ -54,10 +54,15 @@ test('WebGL SignalR connection and round-trip', async ({ page }) => {
   ).toBeTruthy();
   log('SignalR connected');
 
-  // Give time for hub invocations (SendPayloadAll, SendPayloadCaller)
-  // and handler callbacks to complete — any errors here indicate
-  // jslib issues with InvokeJs, OnJs, or invokeCallback
-  await page.waitForTimeout(3000);
+  // Wait for round-trip completion: TestScript invokes SendPayloadCaller,
+  // and the handler logs "ReceivePayloadCaller:" when the response arrives.
+  // This confirms InvokeJs, OnJs, and invokeCallback all work end-to-end.
+  log('Waiting for round-trip "ReceivePayloadCaller:" log...');
+  await expect.poll(() =>
+    logs.some(l => l.includes('ReceivePayloadCaller:')),
+    { timeout: 30_000, message: 'Expected "ReceivePayloadCaller:" in console logs' }
+  ).toBeTruthy();
+  log('Round-trip complete');
 
   // Filter out expected browser noise from error check
   const realErrors = errors.filter(e =>

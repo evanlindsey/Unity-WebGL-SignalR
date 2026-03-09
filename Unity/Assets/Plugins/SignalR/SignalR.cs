@@ -274,11 +274,23 @@ namespace UnityWebGLSignalR
                 connection.Closed -= OnConnectionClosedEvent;
                 connection.Reconnecting -= OnConnectionReconnectingEvent;
                 connection.Reconnected -= OnConnectionReconnectedEvent;
-                connection.DisposeAsync().AsTask().Wait();
+                _ = DisposeConnectionAsync(connection);
                 connection = null;
             }
             if (instance == this)
                 instance = null;
+        }
+
+        private static async Task DisposeConnectionAsync(HubConnection conn)
+        {
+            try
+            {
+                await conn.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"SignalR: Error disposing connection: {ex.Message}");
+            }
         }
 
         private static Task OnConnectionClosedEvent(Exception exception)
@@ -349,6 +361,8 @@ namespace UnityWebGLSignalR
 
         public void Init(string url, SignalROptions options)
         {
+            types.Clear();
+            handlers.Clear();
             InitJs(url, options?.ToJson());
         }
         #endregion
@@ -394,11 +408,16 @@ namespace UnityWebGLSignalR
         [DllImport("__Internal")]
         private static extern void InvokeJs(string methodName, string arg1, string arg2, string arg3, string arg4, string arg5, string arg6, string arg7, string arg8, string arg9, string arg10);
 
+        // Sentinel value for null arguments — JS side converts this back to null.
+        // Required because null C# strings marshal as pointer 0, which is also
+        // the sentinel for "no more arguments" in the jslib InvokeJs function.
+        private const string NULL_SENTINEL = "\x01__null__";
+
         public void Invoke(string methodName, params object[] args)
         {
             var a = new string[10];
             for (int i = 0; i < args.Length && i < 10; i++)
-                a[i] = args[i]?.ToString();
+                a[i] = args[i]?.ToString() ?? NULL_SENTINEL;
             InvokeJs(methodName, a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9]);
         }
         #endregion

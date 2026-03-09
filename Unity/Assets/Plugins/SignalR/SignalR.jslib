@@ -31,6 +31,8 @@ var SignalRLib = {
             }
         },
         // Maps SignalRLogLevel enum to signalR.LogLevel
+        // Must match NULL_SENTINEL in SignalR.cs
+        NULL_SENTINEL: '\x01__null__',
         mapLogLevel: function (value) {
             switch (value) {
                 case 0: return signalR.LogLevel.None;
@@ -163,7 +165,8 @@ var SignalRLib = {
         var args = [];
         for (var i = 0; i < rawArgs.length; i++) {
             if (rawArgs[i] !== 0) {
-                args.push(UTF8ToString(rawArgs[i]));
+                var val = UTF8ToString(rawArgs[i]);
+                args.push(val === vars.NULL_SENTINEL ? null : val);
             } else {
                 break;
             }

@@ -7,7 +7,7 @@ on:
       - 'Unity/**'
       - 'Server/**'
       - 'e2e/**'
-      - '.github/workflows/unity.yml'
+      - '.github/workflows/ci.yml'
       - '.github/workflows/test.yml'
   pull_request:
     branches: [main]
@@ -15,7 +15,7 @@ on:
       - 'Unity/**'
       - 'Server/**'
       - 'e2e/**'
-      - '.github/workflows/unity.yml'
+      - '.github/workflows/ci.yml'
       - '.github/workflows/test.yml'
   workflow_dispatch:
     inputs:
@@ -75,7 +75,7 @@ jobs:
           cp -r build/WebGL/WebGL/* Server/wwwroot/
 
       - name: Commit wwwroot updates
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.dry-run != true
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.dry-run != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -88,7 +88,7 @@ jobs:
           fi
 
       - name: Dry-run summary
-        if: inputs.dry-run == true
+        if: inputs.dry-run == 'true'
         run: |
           echo "::notice::Dry run — skipped wwwroot commit and push"
           echo "Build artifacts are available for inspection"
@@ -96,7 +96,7 @@ jobs:
   smoke:
     name: WebGL Smoke Test
     needs: build
-    if: inputs.skip-smoke != true
+    if: inputs.skip-smoke != 'true'
     runs-on: ubuntu-latest
 
     steps:

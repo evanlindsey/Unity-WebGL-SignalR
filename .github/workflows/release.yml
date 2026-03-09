@@ -128,7 +128,7 @@ jobs:
           echo "$BODY" > release-notes.md
 
       - name: Create tag and GitHub Release
-        if: inputs.dry-run != true
+        if: inputs.dry-run != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -141,7 +141,7 @@ jobs:
             "${{ steps.package.outputs.path }}"
 
       - name: Dry-run summary
-        if: inputs.dry-run == true
+        if: inputs.dry-run == 'true'
         run: |
           echo "::notice::Dry run — would release v${{ needs.version.outputs.version }}"
           echo "Package: ${{ steps.package.outputs.path }}"
@@ -149,7 +149,7 @@ jobs:
           cat release-notes.md
 
       - name: Upload package (dry-run)
-        if: inputs.dry-run == true
+        if: inputs.dry-run == 'true'
         uses: actions/upload-artifact@v6
         with:
           name: unitypackage-dry-run
