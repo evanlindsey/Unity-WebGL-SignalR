@@ -9,6 +9,7 @@ on:
       - 'e2e/**'
       - '.github/workflows/ci.yml'
       - '.github/workflows/test.yml'
+
   workflow_dispatch:
     inputs:
       skip-smoke:

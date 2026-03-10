@@ -7,8 +7,13 @@ on:
       - 'Unity/**'
       - 'Server/**'
       - '.github/workflows/release.yml'
+
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0) — overrides auto-detection'
+        type: string
+        required: false
       dry-run:
         description: 'Run full pipeline without creating a release'
         type: boolean
@@ -31,28 +36,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Find the merged PR for this push
-          PR=$(gh pr list --state merged --base main --json number,labels,mergeCommit \
-            --jq ".[] | select(.mergeCommit.oid == \"$GITHUB_SHA\") | {number, labels}")
-
           VERSION=""
 
-          # Check for version:X.Y.Z label
-          if [ -n "$PR" ]; then
-            VERSION=$(echo "$PR" | jq -r '.labels[]?.name' | sed -n 's/^version://p')
+          # Manual override from workflow_dispatch input
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          fi
+
+          # Check for version:X.Y.Z label on merged PR
+          if [ -z "$VERSION" ]; then
+            PR=$(gh pr list --state merged --base main --json number,labels,mergeCommit \
+              --jq ".[] | select(.mergeCommit.oid == \"$GITHUB_SHA\") | {number, labels}")
+            if [ -n "$PR" ]; then
+              VERSION=$(echo "$PR" | jq -r '.labels[]?.name' | sed -n 's/^version://p')
+            fi
           fi
 
           # No label — auto-increment patch from latest tag
           if [ -z "$VERSION" ]; then
             LATEST=$(git tag -l 'v*' --sort=-v:refname | head -n1)
             if [ -z "$LATEST" ]; then
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-              echo "::notice::No version label and no existing tags — skipping release"
-              exit 0
+              VERSION="1.0.0"
+              echo "::notice::No existing tags — defaulting to $VERSION"
+            else
+              LATEST="${LATEST#v}"
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST"
+              VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
             fi
-            LATEST="${LATEST#v}"
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST"
-            VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
           fi
 
           # Check if tag already exists
@@ -95,6 +105,7 @@ jobs:
         with:
           name: webgl-build
           path: build/WebGL
+          if-no-files-found: error
 
   package:
     name: Export .unitypackage
@@ -115,10 +126,10 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          RELEASE_VERSION: ${{ needs.version.outputs.version }}
         with:
           projectPath: Unity
           buildMethod: UnityWebGLSignalR.Editor.ExportPackage.Export
+          customParameters: -releaseVersion ${{ needs.version.outputs.version }}
           unityVersion: auto
           allowDirtyBuild: true
 
@@ -130,13 +141,15 @@ jobs:
             echo "::error::No .unitypackage found"
             exit 1
           fi
+          echo "path=$PACKAGE" >> "$GITHUB_OUTPUT"
           echo "Found package: $PACKAGE"
 
       - name: Upload .unitypackage
         uses: actions/upload-artifact@v6
         with:
           name: unitypackage
-          path: unity-webgl-signalr-*.unitypackage
+          path: ${{ steps.find.outputs.path }}
+          if-no-files-found: error
 
   release:
     name: Release
