@@ -7,7 +7,7 @@ This guide explains how to set up the SignalR plugin dependencies on Windows, ma
 ### 1. Install PowerShell
 
 **Windows:**
-PowerShell 5.1 is built-in. Alternatively, install PowerShell Core from:
+Install PowerShell 7+ from:
 https://github.com/PowerShell/PowerShell/releases
 
 **macOS (Homebrew):**
@@ -44,36 +44,19 @@ Follow instructions at: https://learn.microsoft.com/en-us/dotnet/core/install/li
 
 ## Installing SignalR Dependencies
 
-### Windows
+Navigate to the lib folder and run the setup script:
 
-1. Open PowerShell and navigate to the lib folder:
-   ```powershell
-   cd path\to\Unity\Assets\Plugins\SignalR\lib
-   ```
+```bash
+cd path/to/Unity/Assets/Plugins/SignalR/lib
+pwsh ./signalr.ps1
+```
 
-2. Run the setup script:
-   ```powershell
-   .\signalr.ps1
-   ```
+The script will:
+- Restore `Microsoft.AspNetCore.SignalR.Client` and all dependencies via `dotnet restore`
+- Extract the `netstandard2.0` compatible DLLs to the `dll/` folder
+- Clean up temporary files
 
-### macOS / Linux
-
-1. Open a terminal and navigate to the lib folder:
-   ```bash
-   cd /path/to/Unity/Assets/Plugins/SignalR/lib
-   ```
-
-2. Run the setup script:
-   ```bash
-   pwsh ./signalr.ps1
-   ```
-
-3. The script will:
-   - Restore `Microsoft.AspNetCore.SignalR.Client` and all dependencies via `dotnet restore`
-   - Extract the `netstandard2.0` compatible DLLs to the `dll/` folder
-   - Clean up temporary files
-
-4. Refresh Unity (or restart it) to load the new assemblies.
+Refresh Unity (or restart it) to load the new assemblies.
 
 ## Troubleshooting
 
@@ -108,9 +91,9 @@ To update to a newer version of SignalR:
 
 ## Platform Support
 
-- **macOS**: Fully supported with PowerShell Core
-- **Windows**: Fully supported with PowerShell 5.1+ or PowerShell Core
-- **Linux**: Supported with PowerShell Core
+- **Windows**: Fully supported with PowerShell 7+
+- **macOS**: Fully supported with PowerShell 7+
+- **Linux**: Fully supported with PowerShell 7+
 
 ## Files
 

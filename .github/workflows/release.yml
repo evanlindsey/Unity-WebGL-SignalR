@@ -200,7 +200,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No wwwroot changes to commit"
           else
-            git commit -m "ci: update wwwroot with WebGL build [skip ci]"
+            git commit -m "release: v${{ needs.version.outputs.version }} [skip ci]"
             git push
           fi
 

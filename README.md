@@ -1,6 +1,6 @@
 # Unity WebGL SignalR
 
-Currently tested against and targeting [Unity 6000.3.2f1](https://unity.com/releases/editor/whats-new/6000.3.2) (Unity 6).
+Currently tested against and targeting [Unity 6000.3.10f1](https://unity.com/releases/editor/whats-new/6000.3.10) (Unity 6).
 
 ## Repo Components
 
@@ -28,10 +28,10 @@ To work with SignalR in the Unity Editor, package dependencies (targeting .NET S
 
 See [SETUP.md](./Unity/Assets/Plugins/SignalR/SETUP.md) for detailed cross-platform installation instructions, or run the quick setup below:
 
-```powershell
-# Requires PowerShell and .NET SDK
+```bash
+# Requires PowerShell 7+ and .NET SDK
 cd Unity/Assets/Plugins/SignalR/lib
-./signalr.ps1
+pwsh ./signalr.ps1
 ```
 
 ## Client JS File
@@ -159,13 +159,18 @@ void Start()
 
 ## Testing
 
-Tests are run from the Unity Test Runner window (`Window > General > Test Runner`):
+### Unity Tests
+
+Run from the Unity Test Runner window (`Window > General > Test Runner`):
 
 - **EditMode tests**: Options serialization, plugin construction, enum validation (no server required)
 - **PlayMode tests**: End-to-end integration tests (requires `make server` running on localhost:5000)
-- **WebGL smoke test**: Headless browser test (Playwright) that loads the built WebGL app and verifies the SignalR jslib bridge works end-to-end — connection, hub method invocation, and handler callbacks
 
-To run the smoke test locally (requires a WebGL build in `Server/wwwroot/`):
+### WebGL Smoke Test
+
+Headless browser test (Playwright) that loads the built WebGL app and verifies the SignalR jslib bridge works end-to-end — connection, hub method invocation, and handler callbacks.
+
+To run locally (requires a WebGL build in `Server/wwwroot/`):
 
 ```bash
 make server &               # Start the server
@@ -180,7 +185,10 @@ Two GitHub Actions workflows are included:
 - **Unity CI** (`ci.yml`) — Runs on PRs. EditMode tests → WebGL build → Playwright smoke test.
 - **Release** (`release.yml`) — Runs on push to `main`. Auto-determines version, builds WebGL + exports `.unitypackage` in parallel, commits fresh wwwroot, tags, and creates GitHub Release.
 
-The Release workflow supports **dry-run mode** via `workflow_dispatch` — runs the full pipeline without committing or creating a release, useful for validating changes.
+The Release workflow also supports `workflow_dispatch` with two optional inputs:
+
+- **`version`**: Override auto-detection with an explicit version (e.g., `1.0.0`).
+- **`dry-run`**: Run the full pipeline without committing or creating a release.
 
 ## Releasing
 
@@ -188,6 +196,7 @@ Releases are fully automated on merge to `main`:
 
 - **Major/minor version**: Add a `version:X.Y.Z` label to the PR before merging.
 - **Patch version**: No label needed — auto-increments the patch from the latest tag (e.g., `1.0.0` → `1.0.1`).
+- **Manual release**: Trigger the Release workflow via `workflow_dispatch` with an explicit version.
 
 The release pipeline will: determine version → build WebGL + export `.unitypackage` (parallel) → commit wwwroot → create git tag → create GitHub Release with changelog and package attached.
 
