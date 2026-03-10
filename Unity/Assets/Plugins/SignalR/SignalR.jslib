@@ -117,6 +117,22 @@ var SignalRLib = {
         }
 
         vars.connection = builder.build();
+
+        // Register event handlers before start() to avoid missing events
+        vars.connection.onclose(function (err) {
+            if (err) {
+                console.error('Connection closed due to error: "' + err.toString() + '".');
+            }
+            vars.invokeCallback([vars.lastConnectionId], vars.disconnectedCallback);
+        });
+        vars.connection.onreconnecting(function (err) {
+            console.log('Connection lost due to error: "' + (err ? err.toString() : 'unknown') + '". Reconnecting.');
+        });
+        vars.connection.onreconnected(function (connectionId) {
+            console.log('Connection reestablished. Connected with connectionId: "' + connectionId + '".');
+            vars.lastConnectionId = connectionId;
+            vars.invokeCallback([vars.lastConnectionId], vars.connectedCallback);
+        });
     },
 
     ConnectJs: function (connectedCallback, disconnectedCallback) {
@@ -125,20 +141,6 @@ var SignalRLib = {
         vars.connection.start()
             .then(function () {
                 vars.lastConnectionId = vars.connection.connectionId;
-                vars.connection.onclose(function (err) {
-                    if (err) {
-                        console.error('Connection closed due to error: "' + err.toString() + '".');
-                    }
-                    vars.invokeCallback([vars.lastConnectionId], vars.disconnectedCallback);
-                });
-                vars.connection.onreconnecting(function (err) {
-                    console.log('Connection lost due to error: "' + (err ? err.toString() : 'unknown') + '". Reconnecting.');
-                });
-                vars.connection.onreconnected(function (connectionId) {
-                    console.log('Connection reestablished. Connected with connectionId: "' + connectionId + '".');
-                    vars.lastConnectionId = connectionId;
-                    vars.invokeCallback([vars.lastConnectionId], vars.connectedCallback);
-                });
                 vars.invokeCallback([vars.lastConnectionId], vars.connectedCallback);
             }).catch(function (err) {
                 return console.error(err.toString());

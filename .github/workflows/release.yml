@@ -7,7 +7,6 @@ on:
       - 'Unity/**'
       - 'Server/**'
       - '.github/workflows/release.yml'
-      - '.github/workflows/test.yml'
   workflow_dispatch:
     inputs:
       dry-run:
@@ -40,7 +39,7 @@ jobs:
 
           # Check for version:X.Y.Z label
           if [ -n "$PR" ]; then
-            VERSION=$(echo "$PR" | jq -r '.labels[]?.name' | grep -oP '^version:\K.*' || true)
+            VERSION=$(echo "$PR" | jq -r '.labels[]?.name' | sed -n 's/^version://p')
           fi
 
           # No label — auto-increment patch from latest tag
@@ -67,22 +66,41 @@ jobs:
           echo "skip=false" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
-  test:
+  build:
+    name: WebGL Build
     needs: version
     if: needs.version.outputs.skip != 'true'
-    uses: ./.github/workflows/test.yml
-    secrets:
-      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+    runs-on: ubuntu-latest
 
-  release:
-    name: Build & Release
-    needs: [version, test]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - uses: ./.github/actions/setup-unity
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Unity
+          targetPlatform: WebGL
+          unityVersion: auto
+
+      - name: Upload WebGL build
+        uses: actions/upload-artifact@v6
+        with:
+          name: webgl-build
+          path: build/WebGL
+
+  package:
+    name: Export .unitypackage
+    needs: version
     if: needs.version.outputs.skip != 'true'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v6
@@ -100,20 +118,78 @@ jobs:
           RELEASE_VERSION: ${{ needs.version.outputs.version }}
         with:
           projectPath: Unity
-          buildMethod: ExportPackage.Export
+          buildMethod: UnityWebGLSignalR.Editor.ExportPackage.Export
           unityVersion: auto
           allowDirtyBuild: true
 
       - name: Find .unitypackage
+        id: find
+        run: |
+          PACKAGE=$(find . -maxdepth 2 -name 'unity-webgl-signalr-*.unitypackage' -print -quit)
+          if [ -z "$PACKAGE" ]; then
+            echo "::error::No .unitypackage found"
+            exit 1
+          fi
+          echo "Found package: $PACKAGE"
+
+      - name: Upload .unitypackage
+        uses: actions/upload-artifact@v6
+        with:
+          name: unitypackage
+          path: unity-webgl-signalr-*.unitypackage
+
+  release:
+    name: Release
+    needs: [version, build, package]
+    if: needs.version.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download WebGL build
+        uses: actions/download-artifact@v7
+        with:
+          name: webgl-build
+          path: build/WebGL
+
+      - name: Download .unitypackage
+        uses: actions/download-artifact@v7
+        with:
+          name: unitypackage
+
+      - name: Find .unitypackage
         id: package
         run: |
-          PACKAGE=$(ls unity-webgl-signalr-*.unitypackage 2>/dev/null || ls Unity/unity-webgl-signalr-*.unitypackage 2>/dev/null)
+          PACKAGE=$(find . -maxdepth 1 -name 'unity-webgl-signalr-*.unitypackage' -print -quit)
           if [ -z "$PACKAGE" ]; then
             echo "::error::No .unitypackage found"
             exit 1
           fi
           echo "path=$PACKAGE" >> "$GITHUB_OUTPUT"
           echo "Found package: $PACKAGE"
+
+      - name: Update wwwroot
+        run: |
+          rm -rf Server/wwwroot/Build Server/wwwroot/TemplateData Server/wwwroot/index.html
+          cp -r build/WebGL/WebGL/* Server/wwwroot/
+
+      - name: Commit wwwroot updates
+        if: inputs.dry-run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Server/wwwroot/
+          if git diff --cached --quiet; then
+            echo "No wwwroot changes to commit"
+          else
+            git commit -m "ci: update wwwroot with WebGL build [skip ci]"
+            git push
+          fi
 
       - name: Extract changelog
         run: |
@@ -125,6 +201,11 @@ jobs:
           if [ -z "$BODY" ]; then
             BODY=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found' CHANGELOG.md)
           fi
+          # Append full changelog comparison link
+          LATEST=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -n "$LATEST" ]; then
+            BODY=$(printf '%s\n\n**Full Changelog**: https://github.com/${{ github.repository }}/compare/%s...v%s' "$BODY" "$LATEST" "$VERSION")
+          fi
           echo "$BODY" > release-notes.md
 
       - name: Create tag and GitHub Release
@@ -133,6 +214,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="v${{ needs.version.outputs.version }}"
+          # Tag the latest commit (includes wwwroot update if one was pushed)
+          git pull --ff-only
           git tag "$TAG"
           git push origin "$TAG"
           gh release create "$TAG" \
@@ -148,9 +231,11 @@ jobs:
           echo "Release notes:"
           cat release-notes.md
 
-      - name: Upload package (dry-run)
+      - name: Upload artifacts (dry-run)
         if: inputs.dry-run == 'true'
         uses: actions/upload-artifact@v6
         with:
-          name: unitypackage-dry-run
-          path: ${{ steps.package.outputs.path }}
+          name: release-dry-run
+          path: |
+            ${{ steps.package.outputs.path }}
+            build/WebGL

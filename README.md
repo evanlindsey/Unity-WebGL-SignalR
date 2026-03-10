@@ -177,19 +177,19 @@ npx playwright test          # Run smoke test
 
 Two GitHub Actions workflows are included:
 
-- **Unity CI** (`unity.yml`) — Runs on PRs and pushes to `main`. EditMode tests → WebGL build → Playwright smoke test. On merge to `main`, auto-commits the fresh WebGL build to `Server/wwwroot/`.
-- **Release** (`release.yml`) — Runs on push to `main`. Auto-determines version, runs EditMode tests, exports `.unitypackage`, creates git tag and GitHub Release.
+- **Unity CI** (`ci.yml`) — Runs on PRs. EditMode tests → WebGL build → Playwright smoke test.
+- **Release** (`release.yml`) — Runs on push to `main`. Auto-determines version, builds WebGL + exports `.unitypackage` in parallel, commits fresh wwwroot, tags, and creates GitHub Release.
 
-Both workflows support **dry-run mode** via `workflow_dispatch` — runs the full pipeline without committing or creating releases, useful for validating CI changes.
+The Release workflow supports **dry-run mode** via `workflow_dispatch` — runs the full pipeline without committing or creating a release, useful for validating changes.
 
 ## Releasing
 
 Releases are fully automated on merge to `main`:
 
 - **Major/minor version**: Add a `version:X.Y.Z` label to the PR before merging.
-- **Patch version**: No label needed — CI auto-increments the patch from the latest tag (e.g., `1.0.0` → `1.0.1`).
+- **Patch version**: No label needed — auto-increments the patch from the latest tag (e.g., `1.0.0` → `1.0.1`).
 
-CI will: run tests → build `.unitypackage` → create git tag → create GitHub Release with changelog and package attached.
+The release pipeline will: determine version → build WebGL + export `.unitypackage` (parallel) → commit wwwroot → create git tag → create GitHub Release with changelog and package attached.
 
 ## References
 

@@ -1,14 +1,6 @@
 name: Unity CI
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'Unity/**'
-      - 'Server/**'
-      - 'e2e/**'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/test.yml'
   pull_request:
     branches: [main]
     paths:
@@ -19,10 +11,6 @@ on:
       - '.github/workflows/test.yml'
   workflow_dispatch:
     inputs:
-      dry-run:
-        description: 'Run full pipeline without committing'
-        type: boolean
-        default: true
       skip-smoke:
         description: 'Skip WebGL smoke test'
         type: boolean
@@ -40,8 +28,6 @@ jobs:
     name: WebGL Build
     needs: test
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - uses: actions/checkout@v6
@@ -66,32 +52,6 @@ jobs:
         with:
           name: webgl-build
           path: build/WebGL
-
-      # On merge to main: update Server/wwwroot with the fresh WebGL build
-      - name: Update wwwroot
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          rm -rf Server/wwwroot/Build Server/wwwroot/TemplateData Server/wwwroot/index.html
-          cp -r build/WebGL/WebGL/* Server/wwwroot/
-
-      - name: Commit wwwroot updates
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.dry-run != 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Server/wwwroot/
-          if git diff --cached --quiet; then
-            echo "No wwwroot changes to commit"
-          else
-            git commit -m "ci: update wwwroot with WebGL build [skip ci]"
-            git push
-          fi
-
-      - name: Dry-run summary
-        if: inputs.dry-run == 'true'
-        run: |
-          echo "::notice::Dry run — skipped wwwroot commit and push"
-          echo "Build artifacts are available for inspection"
 
   smoke:
     name: WebGL Smoke Test

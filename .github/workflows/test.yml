@@ -22,8 +22,6 @@ jobs:
 
       - uses: ./.github/actions/setup-unity
 
-      # Requires UNITY_LICENSE secret to be configured in repository settings.
-      # See: https://game.ci/docs/github/activation
       - uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
