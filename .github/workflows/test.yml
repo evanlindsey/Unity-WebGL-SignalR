@@ -34,7 +34,7 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-artifact@v6
-        if: always()
+        if: ${{ !cancelled() }}
         with:
           name: test-results
           path: artifacts

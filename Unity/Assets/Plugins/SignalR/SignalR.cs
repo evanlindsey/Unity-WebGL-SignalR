@@ -454,54 +454,47 @@ namespace UnityWebGLSignalR
             return false;
         }
 
+        private static void InvokeHandler(string methodName, params string[] args)
+        {
+            if (!TryGetHandler(methodName, out var handler, out var type))
+                return;
+            try
+            {
+                var converted = new object[args.Length];
+                for (int i = 0; i < args.Length; i++)
+                    converted[i] = Convert.ChangeType(args[i], type[i]);
+                handler.Invoke(converted);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"SignalR: Failed to invoke handler for '{methodName}': {ex.Message}");
+            }
+        }
+
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandlerCallback1(string methodName, string arg1)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]));
-        }
+            => InvokeHandler(methodName, arg1);
         [MonoPInvokeCallback(typeof(Action<string, string, string>))]
         private static void HandlerCallback2(string methodName, string arg1, string arg2)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]), Convert.ChangeType(arg2, type[1]));
-        }
+            => InvokeHandler(methodName, arg1, arg2);
         [MonoPInvokeCallback(typeof(Action<string, string, string, string>))]
         private static void HandlerCallback3(string methodName, string arg1, string arg2, string arg3)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]), Convert.ChangeType(arg2, type[1]), Convert.ChangeType(arg3, type[2]));
-        }
+            => InvokeHandler(methodName, arg1, arg2, arg3);
         [MonoPInvokeCallback(typeof(Action<string, string, string, string, string>))]
         private static void HandlerCallback4(string methodName, string arg1, string arg2, string arg3, string arg4)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]), Convert.ChangeType(arg2, type[1]), Convert.ChangeType(arg3, type[2]), Convert.ChangeType(arg4, type[3]));
-        }
+            => InvokeHandler(methodName, arg1, arg2, arg3, arg4);
         [MonoPInvokeCallback(typeof(Action<string, string, string, string, string, string>))]
         private static void HandlerCallback5(string methodName, string arg1, string arg2, string arg3, string arg4, string arg5)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]), Convert.ChangeType(arg2, type[1]), Convert.ChangeType(arg3, type[2]), Convert.ChangeType(arg4, type[3]), Convert.ChangeType(arg5, type[4]));
-        }
+            => InvokeHandler(methodName, arg1, arg2, arg3, arg4, arg5);
         [MonoPInvokeCallback(typeof(Action<string, string, string, string, string, string, string>))]
         private static void HandlerCallback6(string methodName, string arg1, string arg2, string arg3, string arg4, string arg5, string arg6)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]), Convert.ChangeType(arg2, type[1]), Convert.ChangeType(arg3, type[2]), Convert.ChangeType(arg4, type[3]), Convert.ChangeType(arg5, type[4]), Convert.ChangeType(arg6, type[5]));
-        }
+            => InvokeHandler(methodName, arg1, arg2, arg3, arg4, arg5, arg6);
         [MonoPInvokeCallback(typeof(Action<string, string, string, string, string, string, string, string>))]
         private static void HandlerCallback7(string methodName, string arg1, string arg2, string arg3, string arg4, string arg5, string arg6, string arg7)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]), Convert.ChangeType(arg2, type[1]), Convert.ChangeType(arg3, type[2]), Convert.ChangeType(arg4, type[3]), Convert.ChangeType(arg5, type[4]), Convert.ChangeType(arg6, type[5]), Convert.ChangeType(arg7, type[6]));
-        }
+            => InvokeHandler(methodName, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         [MonoPInvokeCallback(typeof(Action<string, string, string, string, string, string, string, string, string>))]
         private static void HandlerCallback8(string methodName, string arg1, string arg2, string arg3, string arg4, string arg5, string arg6, string arg7, string arg8)
-        {
-            if (TryGetHandler(methodName, out var handler, out var type))
-                handler.Invoke(Convert.ChangeType(arg1, type[0]), Convert.ChangeType(arg2, type[1]), Convert.ChangeType(arg3, type[2]), Convert.ChangeType(arg4, type[3]), Convert.ChangeType(arg5, type[4]), Convert.ChangeType(arg6, type[5]), Convert.ChangeType(arg7, type[6]), Convert.ChangeType(arg8, type[7]));
-        }
+            => InvokeHandler(methodName, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 
         public void On<T1>(string methodName, Action<T1> handler)
         {
