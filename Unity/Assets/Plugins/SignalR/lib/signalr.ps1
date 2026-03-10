@@ -11,14 +11,26 @@ $tempDir = Join-Path $scriptDir "temp"
 $dllDir = Join-Path $scriptDir "dll"
 
 Write-Host "Installing SignalR Client v$signalRVersion..."
-Write-Host "Temp directory: $tempDir"
-Write-Host "DLL directory: $dllDir"
 
-# Install NuGet package
-nuget install Microsoft.AspNetCore.SignalR.Client -Version $signalRVersion -OutputDirectory $tempDir
-
+# Create a temporary project to restore the NuGet package (uses dotnet CLI, no nuget binary needed)
+$projFile = Join-Path $tempDir "restore.csproj"
 if (!(Test-Path $tempDir)) {
-    Write-Error "Failed to download packages. Ensure 'nuget' CLI is installed and in your PATH."
+    New-Item -ItemType "directory" -Path $tempDir | Out-Null
+}
+
+$projContent = @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>$netTarget</TargetFramework></PropertyGroup>
+  <ItemGroup><PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$signalRVersion" /></ItemGroup>
+</Project>
+"@
+Set-Content -Path $projFile -Value $projContent
+
+$packagesDir = Join-Path $tempDir "packages"
+dotnet restore $projFile --packages $packagesDir
+
+if (!(Test-Path $packagesDir)) {
+    Write-Error "Failed to restore packages. Ensure 'dotnet' CLI is installed and in your PATH."
     exit 1
 }
 
@@ -27,20 +39,16 @@ if (!(Test-Path $dllDir)) {
     New-Item -ItemType "directory" -Path $dllDir | Out-Null
 }
 
-# Extract DLLs from packages
-$packages = Get-ChildItem -Path $tempDir -Directory
-foreach ($p in $packages) {
-    # Use Join-Path for cross-platform compatibility
-    $libPath = Join-Path $p.FullName "lib" $netTarget
-    if (Test-Path $libPath) {
-        $dlls = Get-ChildItem -Path (Join-Path $libPath "*.dll")
-        foreach ($dll in $dlls) {
-            $outPath = Join-Path $dllDir $dll.Name
-            if (!(Test-Path $outPath)) {
-                Write-Host "  Copying $($dll.Name)"
-                Copy-Item -Path $dll.FullName -Destination $outPath
-            }
-        }
+# Extract DLLs from restored packages
+# dotnet restore layout: {packagesDir}/{name}/{version}/lib/{target}/*.dll
+$dlls = Get-ChildItem -Path $packagesDir -Recurse -Filter "*.dll" |
+Where-Object { $_.Directory.Name -eq $netTarget -and $_.Directory.Parent.Name -eq "lib" }
+
+foreach ($dll in $dlls) {
+    $outPath = Join-Path $dllDir $dll.Name
+    if (!(Test-Path $outPath)) {
+        Write-Host "  Copying $($dll.Name)"
+        Copy-Item -Path $dll.FullName -Destination $outPath
     }
 }
 

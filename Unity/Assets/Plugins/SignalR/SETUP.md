@@ -25,33 +25,9 @@ sudo apt-get install -y powershell
 pwsh --version
 ```
 
-### 2. Install NuGet CLI
+### 2. Install .NET SDK
 
-**Windows:**
-Download from https://www.nuget.org/downloads and add to PATH, or use Chocolatey:
-```powershell
-choco install nuget.commandline
-```
-
-**macOS (Homebrew):**
-```bash
-brew install nuget
-```
-
-**Linux:**
-```bash
-sudo apt-get install -y nuget
-# or download manually from https://www.nuget.org/downloads
-```
-
-**Verify installation:**
-```bash
-nuget help
-```
-
-### 3. Install .NET SDK (For Server Development)
-
-The server project targets .NET 10. To run or modify the server, install the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+The setup script uses `dotnet restore` to fetch NuGet packages. The server project targets .NET 10. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 **Windows:**
 Download from: https://dotnet.microsoft.com/download
@@ -93,32 +69,13 @@ Follow instructions at: https://learn.microsoft.com/en-us/dotnet/core/install/li
    ```
 
 3. The script will:
-   - Download `Microsoft.AspNetCore.SignalR.Client` and all dependencies from NuGet
+   - Restore `Microsoft.AspNetCore.SignalR.Client` and all dependencies via `dotnet restore`
    - Extract the `netstandard2.0` compatible DLLs to the `dll/` folder
    - Clean up temporary files
 
 4. Refresh Unity (or restart it) to load the new assemblies.
 
 ## Troubleshooting
-
-### "Permission denied" errors with NuGet cache
-
-If you see errors like:
-```
-Access to the path '/Users/yourname/.local/share/NuGet/...' is denied.
-```
-
-Fix the permissions:
-```bash
-sudo chown -R $(whoami):staff ~/.local/share
-```
-
-### "nuget: command not found"
-
-Ensure NuGet is installed and in your PATH:
-```bash
-brew install nuget
-```
 
 ### "HubConnection could not be found" in Unity
 
@@ -159,4 +116,3 @@ To update to a newer version of SignalR:
 
 - `signalr.ps1` - Setup script that downloads and extracts SignalR DLLs
 - `dll/` - Output directory containing the SignalR assemblies (gitignored)
-- `version.txt` - Current SignalR version tracking

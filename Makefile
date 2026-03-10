@@ -1,4 +1,4 @@
-.PHONY: help server server-release build build-release format install-signalr copy-build health clean
+.PHONY: help server server-release build build-release format install-signalr health clean
 
 # Default target
 help: ## Show this help
@@ -24,7 +24,7 @@ health: ## Check server health endpoint
 	@curl -sf http://localhost:5000/health && echo " ✓ Server is healthy" || echo " ✗ Server not responding"
 
 # Unity targets
-install-signalr: ## Install SignalR DLLs for Unity (requires pwsh, nuget)
+install-signalr: ## Install SignalR DLLs for Unity (requires pwsh, dotnet)
 	rm -rf Unity/Assets/Plugins/SignalR/lib/dll
 	cd Unity/Assets/Plugins/SignalR/lib && pwsh ./signalr.ps1
 

@@ -1,0 +1,115 @@
+name: Unity CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Unity/**'
+      - 'Server/**'
+      - 'e2e/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/test.yml'
+  workflow_dispatch:
+    inputs:
+      skip-smoke:
+        description: 'Skip WebGL smoke test'
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+  build:
+    name: WebGL Build
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - uses: ./.github/actions/setup-unity
+
+      - name: Build WebGL
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Unity
+          targetPlatform: WebGL
+          unityVersion: auto
+
+      - name: Upload WebGL build
+        uses: actions/upload-artifact@v6
+        with:
+          name: webgl-build
+          path: build/WebGL
+
+  smoke:
+    name: WebGL Smoke Test
+    needs: build
+    if: inputs.skip-smoke != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download WebGL build
+        uses: actions/download-artifact@v7
+        with:
+          name: webgl-build
+          path: build/WebGL
+
+      - name: Copy build to wwwroot
+        run: |
+          rm -rf Server/wwwroot/Build Server/wwwroot/TemplateData Server/wwwroot/index.html
+          cp -r build/WebGL/WebGL/* Server/wwwroot/
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Start server
+        run: |
+          cd Server
+          dotnet run --urls "http://localhost:5000" &
+          # Wait for server to be ready
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5000/health > /dev/null 2>&1; then
+              echo "Server is ready"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+
+      - name: Install Playwright
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+
+      - name: Run smoke test
+        id: smoke
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: Upload smoke test results
+        uses: actions/upload-artifact@v6
+        if: steps.smoke.outcome == 'failure'
+        with:
+          name: smoke-test-results
+          path: e2e/playwright-report

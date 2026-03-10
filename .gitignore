@@ -2,3 +2,18 @@
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# Node
+node_modules/
+
+# Test output
+e2e/test-results/
+
+# Unity license (secret)
+*.ulf

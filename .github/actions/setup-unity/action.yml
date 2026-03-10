@@ -1,0 +1,27 @@
+name: Setup Unity Project
+description: Free disk space, install PowerShell + SignalR DLLs, and cache Unity Library
+
+runs:
+  using: composite
+  steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        dotnet: false
+
+    - name: Install PowerShell
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y powershell
+
+    - name: Install SignalR DLLs
+      shell: bash
+      run: make install-signalr
+
+    - name: Cache Unity Library
+      uses: actions/cache@v5
+      with:
+        path: Unity/Library
+        key: unity-library-${{ hashFiles('Unity/Assets/**', 'Unity/Packages/**', 'Unity/ProjectSettings/**') }}
+        restore-keys: |
+          unity-library-

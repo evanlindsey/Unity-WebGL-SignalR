@@ -409,6 +409,7 @@ MonoBehaviour:
   statusText: Awaiting Connection...
   connectedText: Connection Started
   disconnectedText: Connection Disconnected
+  uiText: {fileID: 839800542}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

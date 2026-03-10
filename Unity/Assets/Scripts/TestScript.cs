@@ -1,5 +1,6 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
+using UnityWebGLSignalR;
 using System;
 using System.Collections;
 
@@ -20,13 +21,12 @@ public class TestScript : MonoBehaviour
     private const string HANDLER_ALL = "ReceivePayloadAll";
     private const string HANDLER_CALLER = "ReceivePayloadCaller";
 
-    private Text uiText;
+    [SerializeField] private Text uiText;
+
     private string currentText = "";
 
     void Start()
     {
-        uiText = GameObject.Find("Text").GetComponent<Text>();
-
         DisplayMessage(statusText);
 
         var signalR = new SignalR();
@@ -35,11 +35,13 @@ public class TestScript : MonoBehaviour
         signalR.On(HANDLER_ALL, (string payload) =>
         {
             var json = JsonUtility.FromJson<JsonPayload>(payload);
+            Debug.Log($"{HANDLER_ALL}: {json.message}");
             DisplayMessage($"{HANDLER_ALL}: {json.message}");
         });
         signalR.On(HANDLER_CALLER, (string payload) =>
         {
             var json = JsonUtility.FromJson<JsonPayload>(payload);
+            Debug.Log($"{HANDLER_CALLER}: {json.message}");
             DisplayMessage($"{HANDLER_CALLER}: {json.message}");
         });
 
@@ -85,7 +87,6 @@ public class TestScript : MonoBehaviour
     IEnumerator RebuildLayout()
     {
         yield return null;
-
         LayoutRebuilder.MarkLayoutForRebuild(uiText.rectTransform);
     }
 
